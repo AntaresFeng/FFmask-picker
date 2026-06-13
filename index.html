@@ -134,17 +134,18 @@
               <div class="time-range-toggle">
                 <input type="checkbox" id="prop-time-enabled" />
                 <label for="prop-time-enabled">时间范围</label>
+                <button id="prop-time-mode" class="time-mode-btn" title="切换时间/帧数模式">时间</button>
               </div>
               <div class="time-range-fields" id="time-range-fields" style="display:none">
-                <label>开始</label><input type="text" id="prop-time-start" placeholder="HH:MM:SS:FF" />
-                <label>结束</label><input type="text" id="prop-time-end" placeholder="HH:MM:SS:FF" />
+                <label id="time-start-label">开始</label><input type="text" id="prop-time-start" placeholder="HH:MM:SS:FF" />
+                <label id="time-end-label">结束</label><input type="text" id="prop-time-end" placeholder="HH:MM:SS:FF" />
               </div>
             </div>
-            <div class="export-area">
-              <button id="export-current-side">📋 复制当前矩形参数</button>
-              <button id="export-all-side">📋 复制全部矩形参数</button>
-              <button id="export-json-side">💾 导出 JSON 配置文件</button>
-            </div>
+          </div>
+          <div class="export-area">
+            <button id="export-current-side">📋 复制当前矩形参数</button>
+            <button id="export-all-side">📋 复制全部矩形参数</button>
+            <button id="export-json-side">💾 导出 JSON 配置文件</button>
           </div>
         </div>
       </div>

@@ -64,7 +64,7 @@ function renderRectList(s: ReturnType<typeof getState>): void {
     item.innerHTML = `
       <div class="color-dot" style="background:${resolveColorDot(rect.color)}"></div>
       <span class="rect-name">矩形 ${rect.id.replace('rect-', '')}</span>
-      <span class="time-hint">${rect.timeRange ? `${formatSeconds(rect.timeRange.start)}-${formatSeconds(rect.timeRange.end)}` : '全视频'}</span>
+      <span class="time-hint">${rect.timeRange ? (rect.timeRange.mode === 'frame' ? `F${rect.timeRange.start}-${rect.timeRange.end}` : `${formatSeconds(rect.timeRange.start)}-${formatSeconds(rect.timeRange.end)}`) : '全视频'}</span>
       <button class="visibility-btn${rect.visible ? '' : ' hidden'}" data-id="${rect.id}">👁</button>
       <button class="delete-btn" data-id="${rect.id}" title="删除">🗑</button>
     `
@@ -155,15 +155,37 @@ function renderPropsPanel(s: ReturnType<typeof getState>): void {
   timeCheckbox.checked = hasTime
   timeFields.style.display = hasTime ? '' : 'none'
 
+  // Time mode toggle
+  const timeModeBtn = document.getElementById('prop-time-mode')!
+  const timeStartLabel = document.getElementById('time-start-label')!
+  const timeEndLabel = document.getElementById('time-end-label')!
+  const isFrameMode = rect.timeRange?.mode === 'frame'
+  timeModeBtn.textContent = isFrameMode ? '帧数' : '时间'
+  timeStartLabel.textContent = isFrameMode ? '起始帧' : '开始'
+  timeEndLabel.textContent = isFrameMode ? '结束帧' : '结束'
+
   if (hasTime && rect.timeRange) {
     const fps = s.fps
     const startInput = document.getElementById('prop-time-start') as HTMLInputElement
     const endInput = document.getElementById('prop-time-end') as HTMLInputElement
-    if (document.activeElement !== startInput) {
-      startInput.value = secondsToTimecode(rect.timeRange.start, fps)
-    }
-    if (document.activeElement !== endInput) {
-      endInput.value = secondsToTimecode(rect.timeRange.end, fps)
+    if (isFrameMode) {
+      if (document.activeElement !== startInput) {
+        startInput.value = String(Math.round(rect.timeRange.start))
+      }
+      if (document.activeElement !== endInput) {
+        endInput.value = String(Math.round(rect.timeRange.end))
+      }
+      startInput.placeholder = '帧数'
+      endInput.placeholder = '帧数'
+    } else {
+      if (document.activeElement !== startInput) {
+        startInput.value = secondsToTimecode(rect.timeRange.start, fps)
+      }
+      if (document.activeElement !== endInput) {
+        endInput.value = secondsToTimecode(rect.timeRange.end, fps)
+      }
+      startInput.placeholder = 'HH:MM:SS:FF'
+      endInput.placeholder = 'HH:MM:SS:FF'
     }
   }
 }
@@ -222,11 +244,35 @@ function setupPropertyInputs(): void {
     const checkbox = document.getElementById('prop-time-enabled') as HTMLInputElement
     if (checkbox.checked) {
       updateRectangle(s.selectedId, {
-        timeRange: { start: 0, end: s.duration },
+        timeRange: { start: 0, end: s.duration, mode: 'time' },
       })
     } else {
       updateRectangle(s.selectedId, { timeRange: undefined })
     }
+  })
+
+  // Time mode toggle
+  document.getElementById('prop-time-mode')!.addEventListener('click', () => {
+    const s = getState()
+    if (!s.selectedId) return
+    const rect = s.rectangles.find(r => r.id === s.selectedId)
+    if (!rect?.timeRange) return
+    const newMode = rect.timeRange.mode === 'frame' ? 'time' : 'frame'
+    const fps = s.fps
+    let newStart = rect.timeRange.start
+    let newEnd = rect.timeRange.end
+    if (newMode === 'frame') {
+      // Convert seconds to frame numbers
+      newStart = Math.round(rect.timeRange.start * fps)
+      newEnd = Math.round(rect.timeRange.end * fps)
+    } else {
+      // Convert frame numbers to seconds
+      newStart = rect.timeRange.start / fps
+      newEnd = rect.timeRange.end / fps
+    }
+    updateRectangle(s.selectedId, {
+      timeRange: { start: newStart, end: newEnd, mode: newMode },
+    })
   })
 
   // Time range inputs
@@ -236,8 +282,10 @@ function setupPropertyInputs(): void {
     const rect = s.rectangles.find(r => r.id === s.selectedId)
     if (!rect?.timeRange) return
     const val = (document.getElementById('prop-time-start') as HTMLInputElement).value
+    const isFrameMode = rect.timeRange.mode === 'frame'
+    const parsedVal = isFrameMode ? Number(val) : timecodeToSeconds(val, s.fps)
     updateRectangle(s.selectedId, {
-      timeRange: { ...rect.timeRange, start: timecodeToSeconds(val, s.fps) },
+      timeRange: { ...rect.timeRange, start: parsedVal },
     })
   })
 
@@ -247,8 +295,10 @@ function setupPropertyInputs(): void {
     const rect = s.rectangles.find(r => r.id === s.selectedId)
     if (!rect?.timeRange) return
     const val = (document.getElementById('prop-time-end') as HTMLInputElement).value
+    const isFrameMode = rect.timeRange.mode === 'frame'
+    const parsedVal = isFrameMode ? Number(val) : timecodeToSeconds(val, s.fps)
     updateRectangle(s.selectedId, {
-      timeRange: { ...rect.timeRange, end: timecodeToSeconds(val, s.fps) },
+      timeRange: { ...rect.timeRange, end: parsedVal },
     })
   })
 }

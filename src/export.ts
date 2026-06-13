@@ -13,7 +13,11 @@ export function drawboxString(rect: Rectangle, _fps: number): string {
   if (rect.timeRange) {
     const start = rect.timeRange.start
     const end = rect.timeRange.end
-    s += `:enable='between(t,${start},${end})'`
+    if (rect.timeRange.mode === 'frame') {
+      s += `:enable='between(n,${start},${end})'`
+    } else {
+      s += `:enable='between(t,${start},${end})'`
+    }
   }
   return s
 }
