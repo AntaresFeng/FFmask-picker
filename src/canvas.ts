@@ -33,14 +33,24 @@ export function initCanvas(): void {
   videoEl.muted = true
   document.body.appendChild(videoEl)
 
+  // ResizeObserver handles both initial sizing and window resize
+  const container = document.getElementById('canvas-container')!
+  const ro = new ResizeObserver(() => {
+    canvas.width = container.clientWidth
+    canvas.height = container.clientHeight
+  })
+  ro.observe(container)
+  // Also set initial size in case container is already visible
   resizeCanvas()
   window.addEventListener('resize', resizeCanvas)
 }
 
 function resizeCanvas(): void {
   const container = document.getElementById('canvas-container')!
-  canvas.width = container.clientWidth
-  canvas.height = container.clientHeight
+  if (container.clientWidth > 0 && container.clientHeight > 0) {
+    canvas.width = container.clientWidth
+    canvas.height = container.clientHeight
+  }
 }
 
 export function getVideoElement(): HTMLVideoElement {
@@ -149,6 +159,7 @@ export function renderLoop(): void {
 }
 
 function render(): void {
+  if (canvas.width === 0 || canvas.height === 0) return
   const s = getState()
   ctx.clearRect(0, 0, canvas.width, canvas.height)
 
