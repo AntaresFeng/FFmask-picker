@@ -33,19 +33,20 @@ export function initCanvas(): void {
   videoEl.muted = true
   document.body.appendChild(videoEl)
 
-  // ResizeObserver handles both initial sizing and window resize
+  // ResizeObserver sets a pending flag; actual resize happens in renderLoop
   const container = document.getElementById('canvas-container')!
   const ro = new ResizeObserver(() => {
-    canvas.width = container.clientWidth
-    canvas.height = container.clientHeight
+    resizePending = true
   })
   ro.observe(container)
-  // Also set initial size in case container is already visible
-  resizeCanvas()
-  window.addEventListener('resize', resizeCanvas)
+  window.addEventListener('resize', () => { resizePending = true })
 }
 
-function resizeCanvas(): void {
+let resizePending = true
+
+function applyResize(): void {
+  if (!resizePending) return
+  resizePending = false
   const container = document.getElementById('canvas-container')!
   if (container.clientWidth > 0 && container.clientHeight > 0) {
     canvas.width = container.clientWidth
@@ -148,6 +149,7 @@ export function setLastMouse(x: number, y: number): void {
 
 /** Main render loop. Call once, then it self-schedules. */
 export function renderLoop(): void {
+  applyResize()
   render()
   // Draw temp rect if in draw-drag
   const drag = getDragState()
@@ -161,7 +163,10 @@ export function renderLoop(): void {
 function render(): void {
   if (canvas.width === 0 || canvas.height === 0) return
   const s = getState()
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+  // Fill background to prevent flickering
+  ctx.fillStyle = '#1a1a2e'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
 
   // Draw video frame
   if (videoEl.readyState >= 2) {
