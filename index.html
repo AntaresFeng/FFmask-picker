@@ -93,7 +93,13 @@
                   <div class="color-option" data-color="blue"></div>
                   <div class="color-option" data-color="green"></div>
                 </div>
-                <label>粗细</label><input type="number" id="prop-thickness" min="1" max="20" />
+                <label>粗细</label>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <input type="number" id="prop-thickness" min="1" max="20" style="flex:1" />
+                  <label style="display:flex;align-items:center;gap:3px;font-size:11px;color:#aaa;white-space:nowrap">
+                    <input type="checkbox" id="prop-filled" /> 填充
+                  </label>
+                </div>
               </div>
               <div class="time-range-toggle">
                 <input type="checkbox" id="prop-time-enabled" />

@@ -91,6 +91,7 @@ export function createRectangle(overrides?: Partial<Rectangle>): Rectangle {
     height: 100,
     color: state.currentColor,
     thickness: 4,
+    filled: false,
     visible: true,
     ...overrides,
   }

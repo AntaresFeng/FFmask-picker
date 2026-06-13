@@ -1,6 +1,6 @@
 // src/interaction.ts
 
-import { getState, setState, addRectangle, updateRectangle, pushHistory, createRectangle, getDragState, setDragState } from './state'
+import { getState, setState, addRectangle, updateRectangle, removeRectangle, pushHistory, createRectangle, getDragState, setDragState, undo, redo } from './state'
 import { getCanvasElement, screenToFrame, hitTestHandle, hitTestRect, getScale } from './canvas'
 
 export function initInteraction(): void {
@@ -11,6 +11,9 @@ export function initInteraction(): void {
   canvas.addEventListener('mouseup', onMouseUp)
   canvas.addEventListener('wheel', onWheel, { passive: false })
   canvas.addEventListener('contextmenu', e => e.preventDefault())
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', onKeyDown)
 }
 
 function onMouseDown(e: MouseEvent): void {
@@ -237,4 +240,47 @@ function updateCursor(e: MouseEvent): void {
   }
 
   canvas.style.cursor = 'default'
+}
+
+function onKeyDown(e: KeyboardEvent): void {
+  // Don't handle shortcuts when typing in input fields
+  const tag = (e.target as HTMLElement).tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return
+
+  const s = getState()
+
+  // Delete — remove selected rectangle
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (s.selectedId) {
+      e.preventDefault()
+      removeRectangle(s.selectedId)
+    }
+    return
+  }
+
+  // Space — toggle play/pause
+  if (e.key === ' ') {
+    e.preventDefault()
+    const video = document.querySelector('video') as HTMLVideoElement | null
+    if (video) {
+      if (video.paused) video.play()
+      else video.pause()
+    }
+    return
+  }
+
+  // Ctrl+Z — undo
+  if (e.key === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
+    e.preventDefault()
+    undo()
+    return
+  }
+
+  // Ctrl+Shift+Z or Ctrl+Y — redo
+  if ((e.key === 'z' && (e.ctrlKey || e.metaKey) && e.shiftKey) ||
+      (e.key === 'y' && (e.ctrlKey || e.metaKey))) {
+    e.preventDefault()
+    redo()
+    return
+  }
 }

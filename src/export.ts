@@ -7,7 +7,8 @@ import { secondsToTimecode } from './timecode'
  * Generate a single drawbox filter string for one rectangle.
  */
 export function drawboxString(rect: Rectangle, _fps: number): string {
-  let s = `drawbox=x=${rect.x}:y=${rect.y}:w=${rect.width}:h=${rect.height}:color=${rect.color}:t=${rect.thickness}`
+  const t = rect.filled ? 'fill' : String(rect.thickness)
+  let s = `drawbox=x=${rect.x}:y=${rect.y}:w=${rect.width}:h=${rect.height}:color=${rect.color}:t=${t}`
   if (rect.timeRange) {
     const start = rect.timeRange.start
     const end = rect.timeRange.end

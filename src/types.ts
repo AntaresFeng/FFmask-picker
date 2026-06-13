@@ -10,6 +10,7 @@ export interface Rectangle {
   height: number
   color: Color
   thickness: number
+  filled: boolean
   visible: boolean
   timeRange?: {
     start: number // seconds

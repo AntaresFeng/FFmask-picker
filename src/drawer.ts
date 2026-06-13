@@ -1,6 +1,6 @@
 // src/drawer.ts
 
-import { getState, setState, subscribe, addRectangle, updateRectangle, createRectangle } from './state'
+import { getState, setState, subscribe, addRectangle, updateRectangle, removeRectangle, createRectangle } from './state'
 import { secondsToTimecode, timecodeToSeconds } from './timecode'
 import { drawboxString, allDrawboxString, exportJson, copyToClipboard, downloadFile } from './export'
 import type { Color } from './types'
@@ -56,6 +56,7 @@ function renderRectList(s: ReturnType<typeof getState>): void {
       <span class="rect-name">矩形 ${rect.id.replace('rect-', '')}</span>
       <span class="time-hint">${rect.timeRange ? `${formatSeconds(rect.timeRange.start)}-${formatSeconds(rect.timeRange.end)}` : '全视频'}</span>
       <button class="visibility-btn${rect.visible ? '' : ' hidden'}" data-id="${rect.id}">👁</button>
+      <button class="delete-btn" data-id="${rect.id}" title="删除">🗑</button>
     `
     item.addEventListener('click', (e) => {
       if ((e.target as HTMLElement).classList.contains('visibility-btn')) return
@@ -73,6 +74,15 @@ function renderRectList(s: ReturnType<typeof getState>): void {
       if (rect) {
         updateRectangle(id, { visible: !rect.visible })
       }
+    })
+  })
+
+  // Delete buttons
+  container.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      const id = (btn as HTMLElement).dataset.id!
+      removeRectangle(id)
     })
   })
 }
@@ -112,6 +122,13 @@ function renderPropsPanel(s: ReturnType<typeof getState>): void {
       ? 'color-option active'
       : 'color-option'
   })
+
+  // Fill mode
+  const fillCheckbox = document.getElementById('prop-filled') as HTMLInputElement
+  const thicknessInput = document.getElementById('prop-thickness') as HTMLInputElement
+  fillCheckbox.checked = rect.filled
+  thicknessInput.disabled = rect.filled
+  thicknessInput.style.opacity = rect.filled ? '0.4' : '1'
 
   // Time range
   const timeCheckbox = document.getElementById('prop-time-enabled') as HTMLInputElement
@@ -153,6 +170,14 @@ function setupPropertyInputs(): void {
       if (!s.selectedId) return
       updateRectangle(s.selectedId, { color: (el as HTMLElement).dataset.color as Color })
     })
+  })
+
+  // Fill mode toggle
+  document.getElementById('prop-filled')!.addEventListener('change', () => {
+    const s = getState()
+    if (!s.selectedId) return
+    const checkbox = document.getElementById('prop-filled') as HTMLInputElement
+    updateRectangle(s.selectedId, { filled: checkbox.checked })
   })
 
   // Time range toggle
