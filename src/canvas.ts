@@ -213,30 +213,17 @@ function drawRectangle(rect: Rectangle, s: AppState): void {
   ctx.save()
   if (isOtherSelected) ctx.globalAlpha = 0.5
 
-  if (rect.filled) {
-    // Filled rectangle
-    ctx.fillStyle = color
-    const fillAlpha = isOtherSelected ? 0.25 * rect.opacity : 0.5 * rect.opacity
-    ctx.globalAlpha = fillAlpha
+  // Fill for selected
+  if (isSelected) {
+    ctx.fillStyle = color + '14' // ~8% opacity
     ctx.fillRect(tl.x, tl.y, w, h)
-    ctx.globalAlpha = isOtherSelected ? 0.5 : 1
-    ctx.strokeStyle = color
-    ctx.lineWidth = isSelected ? 3 : 2
-    ctx.strokeRect(tl.x, tl.y, w, h)
-  } else {
-    // Fill for selected
-    if (isSelected) {
-      ctx.fillStyle = color + '14' // ~8% opacity
-      ctx.fillRect(tl.x, tl.y, w, h)
-    }
-
-    // Border
-    ctx.strokeStyle = color
-    ctx.globalAlpha = rect.opacity
-    ctx.lineWidth = isSelected ? 3 : 2
-    ctx.setLineDash(isSelected ? [] : [])
-    ctx.strokeRect(tl.x, tl.y, w, h)
   }
+
+  // Border
+  ctx.strokeStyle = color
+  ctx.lineWidth = isSelected ? 3 : 2
+  ctx.setLineDash(isSelected ? [] : [])
+  ctx.strokeRect(tl.x, tl.y, w, h)
 
   // Control points for selected
   if (isSelected) {
