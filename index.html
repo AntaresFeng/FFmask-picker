@@ -6,7 +6,116 @@
     <title>FFmask Picker</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <!-- Upload overlay -->
+      <div id="upload-overlay">
+        <div class="upload-box" id="upload-box">
+          <h2>上传视频</h2>
+          <p>拖拽文件到此处，或点击选择</p>
+          <p style="margin-top:0.5rem;font-size:11px;color:#666">支持 mp4、webm、ogg 等浏览器原生格式</p>
+          <input type="file" id="file-input" accept="video/*" style="display:none" />
+        </div>
+      </div>
+
+      <!-- Toolbar (hidden until video loaded) -->
+      <div id="toolbar" style="display:none">
+        <!-- Upload -->
+        <div class="toolbar-group">
+          <button id="btn-upload">上传</button>
+        </div>
+        <div class="toolbar-sep"></div>
+
+        <!-- Frame navigation -->
+        <div class="toolbar-group" style="flex:1;min-width:0">
+          <button id="btn-play" title="播放/暂停">▶</button>
+          <span id="frame-display" title="点击切换帧数/时间码">0 / 0</span>
+          <input type="range" id="frame-slider" min="0" max="100" value="0" />
+        </div>
+        <div class="toolbar-sep"></div>
+
+        <!-- Mode -->
+        <div class="toolbar-group">
+          <button id="btn-mode-draw" class="active">✦ 绘制</button>
+          <button id="btn-mode-select">◇ 选择</button>
+        </div>
+        <div class="toolbar-sep"></div>
+
+        <!-- Color -->
+        <div class="toolbar-group">
+          <div class="color-swatch active" data-color="red"></div>
+          <div class="color-swatch" data-color="blue"></div>
+          <div class="color-swatch" data-color="green"></div>
+        </div>
+        <div class="toolbar-sep"></div>
+
+        <!-- Actions -->
+        <div class="toolbar-group">
+          <button id="btn-undo" title="撤销">↩</button>
+          <button id="btn-redo" title="重做">↪</button>
+        </div>
+        <div style="position:relative">
+          <button id="btn-export" class="primary">导出 ▾</button>
+          <div class="export-dropdown" id="export-dropdown">
+            <button id="export-current">📋 复制当前矩形参数</button>
+            <button id="export-all">📋 复制全部矩形参数</button>
+            <button id="export-json">💾 导出 JSON 配置文件</button>
+          </div>
+        </div>
+        <button id="btn-drawer-toggle" title="展开/折叠面板">☰</button>
+      </div>
+
+      <!-- Main area -->
+      <div id="main-area" style="display:none">
+        <div id="canvas-container">
+          <canvas id="main-canvas"></canvas>
+          <canvas id="minimap" width="120" height="80"></canvas>
+        </div>
+        <div id="drawer">
+          <div class="drawer-header">
+            <span>矩形</span>
+            <button class="close-btn" id="drawer-close">✕</button>
+          </div>
+          <div class="drawer-content">
+            <div class="rect-list" id="rect-list"></div>
+            <div style="padding:4px 6px">
+              <button class="add-rect-btn" id="btn-add-rect">+ 添加矩形</button>
+            </div>
+            <div class="props-panel" id="props-panel" style="display:none">
+              <div class="props-title">属性</div>
+              <div class="props-grid">
+                <label>X</label><input type="number" id="prop-x" />
+                <label>Y</label><input type="number" id="prop-y" />
+                <label>宽</label><input type="number" id="prop-w" />
+                <label>高</label><input type="number" id="prop-h" />
+                <label>颜色</label>
+                <div class="color-options">
+                  <div class="color-option" data-color="red"></div>
+                  <div class="color-option" data-color="blue"></div>
+                  <div class="color-option" data-color="green"></div>
+                </div>
+                <label>粗细</label><input type="number" id="prop-thickness" min="1" max="20" />
+              </div>
+              <div class="time-range-toggle">
+                <input type="checkbox" id="prop-time-enabled" />
+                <label for="prop-time-enabled">时间范围</label>
+              </div>
+              <div class="time-range-fields" id="time-range-fields" style="display:none">
+                <label>开始</label><input type="text" id="prop-time-start" placeholder="HH:MM:SS:FF" />
+                <label>结束</label><input type="text" id="prop-time-end" placeholder="HH:MM:SS:FF" />
+              </div>
+            </div>
+            <div class="export-area">
+              <button id="export-current-side">📋 复制当前矩形参数</button>
+              <button id="export-all-side">📋 复制全部矩形参数</button>
+              <button id="export-json-side">💾 导出 JSON 配置文件</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toast -->
+      <div class="toast" id="toast"></div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
