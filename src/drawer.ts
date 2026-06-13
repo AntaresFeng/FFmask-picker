@@ -304,12 +304,6 @@ function setupPropertyInputs(): void {
 }
 
 function setupExportButtons(): void {
-  // Toolbar dropdown buttons
-  document.getElementById('export-current')!.addEventListener('click', () => exportCurrent())
-  document.getElementById('export-all')!.addEventListener('click', () => exportAll())
-  document.getElementById('export-json')!.addEventListener('click', () => exportJsonFile())
-
-  // Drawer side buttons
   document.getElementById('export-current-side')!.addEventListener('click', () => exportCurrent())
   document.getElementById('export-all-side')!.addEventListener('click', () => exportAll())
   document.getElementById('export-json-side')!.addEventListener('click', () => exportJsonFile())
