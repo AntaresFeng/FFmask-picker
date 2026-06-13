@@ -8,7 +8,8 @@ import { secondsToTimecode } from './timecode'
  */
 export function drawboxString(rect: Rectangle, _fps: number): string {
   const t = rect.filled ? 'fill' : String(rect.thickness)
-  let s = `drawbox=x=${rect.x}:y=${rect.y}:w=${rect.width}:h=${rect.height}:color=${rect.color}:t=${t}`
+  const color = rect.opacity < 1 ? `${rect.color}@${rect.opacity}` : rect.color
+  let s = `drawbox=x=${rect.x}:y=${rect.y}:w=${rect.width}:h=${rect.height}:color=${color}:t=${t}`
   if (rect.timeRange) {
     const start = rect.timeRange.start
     const end = rect.timeRange.end

@@ -1,6 +1,6 @@
 // src/types.ts
 
-export type Color = 'red' | 'blue' | 'green'
+export type Color = string
 
 export interface Rectangle {
   id: string
@@ -11,6 +11,7 @@ export interface Rectangle {
   color: Color
   thickness: number
   filled: boolean
+  opacity: number // 0.0 - 1.0
   visible: boolean
   timeRange?: {
     start: number // seconds

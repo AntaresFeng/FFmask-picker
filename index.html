@@ -30,6 +30,13 @@
           <button id="btn-play" title="播放/暂停">▶</button>
           <span id="frame-display" title="点击切换帧数/时间码">0 / 0</span>
           <input type="range" id="frame-slider" min="0" max="100" value="0" />
+          <select id="speed-select" title="播放倍速">
+            <option value="0.25">0.25x</option>
+            <option value="0.5">0.5x</option>
+            <option value="1" selected>1x</option>
+            <option value="1.5">1.5x</option>
+            <option value="2">2x</option>
+          </select>
         </div>
         <div class="toolbar-sep"></div>
 
@@ -41,25 +48,36 @@
         <div class="toolbar-sep"></div>
 
         <!-- Color -->
-        <div class="toolbar-group">
-          <div class="color-swatch active" data-color="red"></div>
-          <div class="color-swatch" data-color="blue"></div>
-          <div class="color-swatch" data-color="green"></div>
+        <div class="toolbar-group" style="position:relative">
+          <button id="btn-color" title="矩形颜色">
+            <span id="color-preview" style="display:inline-block;width:14px;height:14px;border-radius:3px;background:#ff4444;vertical-align:middle;border:1px solid #fff"></span>
+            ▾
+          </button>
+          <div class="color-dropdown" id="color-dropdown">
+            <div class="color-presets">
+              <div class="color-preset" data-color="black" style="background:#000" title="black"></div>
+              <div class="color-preset" data-color="white" style="background:#fff" title="white"></div>
+              <div class="color-preset active" data-color="red" style="background:#ff4444" title="red"></div>
+              <div class="color-preset" data-color="green" style="background:#44cc44" title="green"></div>
+              <div class="color-preset" data-color="blue" style="background:#4488ff" title="blue"></div>
+              <div class="color-preset" data-color="yellow" style="background:#ffff00" title="yellow"></div>
+              <div class="color-preset" data-color="cyan" style="background:#00ffff" title="cyan"></div>
+              <div class="color-preset" data-color="magenta" style="background:#ff00ff" title="magenta"></div>
+              <div class="color-preset" data-color="orange" style="background:#ff8800" title="orange"></div>
+            </div>
+            <div class="color-custom">
+              <label>自定义:</label>
+              <input type="color" id="custom-color" value="#ff4444" />
+            </div>
+          </div>
         </div>
         <div class="toolbar-sep"></div>
 
         <!-- Actions -->
         <div class="toolbar-group">
-          <button id="btn-undo" title="撤销">↩</button>
-          <button id="btn-redo" title="重做">↪</button>
-        </div>
-        <div style="position:relative">
-          <button id="btn-export" class="primary">导出 ▾</button>
-          <div class="export-dropdown" id="export-dropdown">
-            <button id="export-current">📋 复制当前矩形参数</button>
-            <button id="export-all">📋 复制全部矩形参数</button>
-            <button id="export-json">💾 导出 JSON 配置文件</button>
-          </div>
+          <button id="btn-undo" title="撤销 (Ctrl+Z)">↩</button>
+          <button id="btn-redo" title="重做 (Ctrl+Shift+Z)">↪</button>
+          <button id="btn-reset" title="复位画布缩放/位置">⟲</button>
         </div>
         <button id="btn-drawer-toggle" title="展开/折叠面板">☰</button>
       </div>
@@ -89,9 +107,21 @@
                 <label>高</label><input type="number" id="prop-h" />
                 <label>颜色</label>
                 <div class="color-options">
-                  <div class="color-option" data-color="red"></div>
-                  <div class="color-option" data-color="blue"></div>
-                  <div class="color-option" data-color="green"></div>
+                  <div class="color-option" data-color="black" style="background:#000"></div>
+                  <div class="color-option" data-color="white" style="background:#fff"></div>
+                  <div class="color-option" data-color="red" style="background:#ff4444"></div>
+                  <div class="color-option" data-color="green" style="background:#44cc44"></div>
+                  <div class="color-option" data-color="blue" style="background:#4488ff"></div>
+                  <div class="color-option" data-color="yellow" style="background:#ffff00"></div>
+                  <div class="color-option" data-color="cyan" style="background:#00ffff"></div>
+                  <div class="color-option" data-color="magenta" style="background:#ff00ff"></div>
+                  <div class="color-option" data-color="orange" style="background:#ff8800"></div>
+                  <input type="color" id="prop-custom-color" value="#ff4444" style="width:18px;height:18px;border:none;cursor:pointer" title="自定义颜色" />
+                </div>
+                <label>透明度</label>
+                <div style="display:flex;align-items:center;gap:4px">
+                  <input type="range" id="prop-opacity" min="0" max="1" step="0.05" style="flex:1" />
+                  <span id="prop-opacity-val" style="font-size:11px;color:#aaa;min-width:28px">1</span>
                 </div>
                 <label>粗细</label>
                 <div style="display:flex;align-items:center;gap:6px">

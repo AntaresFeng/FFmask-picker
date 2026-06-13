@@ -17,6 +17,19 @@ const COLOR_MAP: Record<string, string> = {
   red: '#ff4444',
   blue: '#4488ff',
   green: '#44cc44',
+  black: '#000000',
+  white: '#ffffff',
+  yellow: '#ffff00',
+  cyan: '#00ffff',
+  magenta: '#ff00ff',
+  orange: '#ff8800',
+}
+
+function resolveColor(color: string): string {
+  // Already a hex color or CSS color
+  if (color.startsWith('#') || color.startsWith('rgb') || color.startsWith('hsl')) return color
+  // Named color - check map first, then try as CSS color
+  return COLOR_MAP[color.toLowerCase()] || color
 }
 
 export function initCanvas(): void {
@@ -188,7 +201,7 @@ function render(): void {
 }
 
 function drawRectangle(rect: Rectangle, s: AppState): void {
-  const color = COLOR_MAP[rect.color] || rect.color
+  const color = resolveColor(rect.color)
   const tl = frameToScreen(rect.x, rect.y)
   const br = frameToScreen(rect.x + rect.width, rect.y + rect.height)
   const w = br.x - tl.x
@@ -203,7 +216,8 @@ function drawRectangle(rect: Rectangle, s: AppState): void {
   if (rect.filled) {
     // Filled rectangle
     ctx.fillStyle = color
-    ctx.globalAlpha = isOtherSelected ? 0.25 : 0.5
+    const fillAlpha = isOtherSelected ? 0.25 * rect.opacity : 0.5 * rect.opacity
+    ctx.globalAlpha = fillAlpha
     ctx.fillRect(tl.x, tl.y, w, h)
     ctx.globalAlpha = isOtherSelected ? 0.5 : 1
     ctx.strokeStyle = color
@@ -218,6 +232,7 @@ function drawRectangle(rect: Rectangle, s: AppState): void {
 
     // Border
     ctx.strokeStyle = color
+    ctx.globalAlpha = rect.opacity
     ctx.lineWidth = isSelected ? 3 : 2
     ctx.setLineDash(isSelected ? [] : [])
     ctx.strokeRect(tl.x, tl.y, w, h)
@@ -243,7 +258,7 @@ export function drawTempRect(x1: number, y1: number, x2: number, y2: number, col
   const s1 = frameToScreen(x1, y1)
   const s2 = frameToScreen(x2, y2)
   ctx.save()
-  ctx.strokeStyle = COLOR_MAP[color] || color
+  ctx.strokeStyle = resolveColor(color)
   ctx.lineWidth = 2
   ctx.setLineDash([6, 4])
   ctx.strokeRect(s1.x, s1.y, s2.x - s1.x, s2.y - s1.y)

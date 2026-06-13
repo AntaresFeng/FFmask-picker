@@ -3,7 +3,7 @@
 import { getState, setState, subscribe, undo, redo, canUndo, canRedo } from './state'
 import { getVideoElement } from './canvas'
 import { formatTime } from './timecode'
-import type { Color, AppState } from './types'
+import type { AppState } from './types'
 
 let displayMode: 'frame' | 'time' = 'frame'
 
@@ -12,9 +12,10 @@ export function initToolbar(): void {
   setupPlayback()
   setupDisplayToggle()
   setupModeButtons()
-  setupColorSwatches()
+  setupColorDropdown()
+  setupSpeedControl()
   setupUndoRedo()
-  setupExportDropdown()
+  setupResetButton()
 
   subscribe(updateToolbarState)
   updateToolbarState(getState())
@@ -132,24 +133,9 @@ function setupModeButtons(): void {
   })
 }
 
-function setupColorSwatches(): void {
-  const swatches = document.querySelectorAll('.color-swatch')
-  swatches.forEach(el => {
-    el.addEventListener('click', () => {
-      const color = (el as HTMLElement).dataset.color as Color
-      setState({ currentColor: color })
-    })
-  })
-}
-
-function setupUndoRedo(): void {
-  document.getElementById('btn-undo')!.addEventListener('click', undo)
-  document.getElementById('btn-redo')!.addEventListener('click', redo)
-}
-
-function setupExportDropdown(): void {
-  const btn = document.getElementById('btn-export')!
-  const dropdown = document.getElementById('export-dropdown')!
+function setupColorDropdown(): void {
+  const btn = document.getElementById('btn-color')!
+  const dropdown = document.getElementById('color-dropdown')!
 
   btn.addEventListener('click', (e) => {
     e.stopPropagation()
@@ -159,6 +145,41 @@ function setupExportDropdown(): void {
   document.addEventListener('click', () => {
     dropdown.classList.remove('open')
   })
+
+  // Preset colors
+  document.querySelectorAll('.color-preset').forEach(el => {
+    el.addEventListener('click', () => {
+      const color = (el as HTMLElement).dataset.color!
+      setState({ currentColor: color })
+      dropdown.classList.remove('open')
+    })
+  })
+
+  // Custom color
+  const customInput = document.getElementById('custom-color') as HTMLInputElement
+  customInput.addEventListener('input', () => {
+    setState({ currentColor: customInput.value })
+  })
+}
+
+function setupSpeedControl(): void {
+  const select = document.getElementById('speed-select') as HTMLSelectElement
+  const video = getVideoElement()
+
+  select.addEventListener('change', () => {
+    video.playbackRate = Number(select.value)
+  })
+}
+
+function setupUndoRedo(): void {
+  document.getElementById('btn-undo')!.addEventListener('click', undo)
+  document.getElementById('btn-redo')!.addEventListener('click', redo)
+}
+
+function setupResetButton(): void {
+  document.getElementById('btn-reset')!.addEventListener('click', () => {
+    setState({ zoom: 1, panX: 0, panY: 0 })
+  })
 }
 
 function updateToolbarState(s: AppState): void {
@@ -166,12 +187,21 @@ function updateToolbarState(s: AppState): void {
   document.getElementById('btn-mode-draw')!.className = s.mode === 'draw' ? 'active' : ''
   document.getElementById('btn-mode-select')!.className = s.mode === 'select' ? 'active' : ''
 
-  // Color swatches
-  document.querySelectorAll('.color-swatch').forEach(el => {
+  // Color preview
+  const preview = document.getElementById('color-preview')!
+  const colorMap: Record<string, string> = {
+    red: '#ff4444', blue: '#4488ff', green: '#44cc44',
+    black: '#000000', white: '#ffffff', yellow: '#ffff00',
+    cyan: '#00ffff', magenta: '#ff00ff', orange: '#ff8800',
+  }
+  preview.style.background = colorMap[s.currentColor] || s.currentColor
+
+  // Color preset active state
+  document.querySelectorAll('.color-preset').forEach(el => {
     const htmlEl = el as HTMLElement
     htmlEl.className = htmlEl.dataset.color === s.currentColor
-      ? 'color-swatch active'
-      : 'color-swatch'
+      ? 'color-preset active'
+      : 'color-preset'
   })
 
   // Undo/redo

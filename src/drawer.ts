@@ -3,13 +3,23 @@
 import { getState, setState, subscribe, addRectangle, updateRectangle, removeRectangle, createRectangle } from './state'
 import { secondsToTimecode, timecodeToSeconds } from './timecode'
 import { drawboxString, allDrawboxString, exportJson, copyToClipboard, downloadFile } from './export'
-import type { Color } from './types'
 import { showToast } from './toast'
 
 const COLOR_DOT_MAP: Record<string, string> = {
   red: '#ff4444',
   blue: '#4488ff',
   green: '#44cc44',
+  black: '#000000',
+  white: '#ffffff',
+  yellow: '#ffff00',
+  cyan: '#00ffff',
+  magenta: '#ff00ff',
+  orange: '#ff8800',
+}
+
+function resolveColorDot(color: string): string {
+  if (color.startsWith('#') || color.startsWith('rgb')) return color
+  return COLOR_DOT_MAP[color.toLowerCase()] || color
 }
 
 export function initDrawer(): void {
@@ -52,7 +62,7 @@ function renderRectList(s: ReturnType<typeof getState>): void {
     const item = document.createElement('div')
     item.className = `rect-item${s.selectedId === rect.id ? ' selected' : ''}`
     item.innerHTML = `
-      <div class="color-dot" style="background:${COLOR_DOT_MAP[rect.color]}"></div>
+      <div class="color-dot" style="background:${resolveColorDot(rect.color)}"></div>
       <span class="rect-name">矩形 ${rect.id.replace('rect-', '')}</span>
       <span class="time-hint">${rect.timeRange ? `${formatSeconds(rect.timeRange.start)}-${formatSeconds(rect.timeRange.end)}` : '全视频'}</span>
       <button class="visibility-btn${rect.visible ? '' : ' hidden'}" data-id="${rect.id}">👁</button>
@@ -130,6 +140,14 @@ function renderPropsPanel(s: ReturnType<typeof getState>): void {
   thicknessInput.disabled = rect.filled
   thicknessInput.style.opacity = rect.filled ? '0.4' : '1'
 
+  // Opacity
+  const opacitySlider = document.getElementById('prop-opacity') as HTMLInputElement
+  const opacityVal = document.getElementById('prop-opacity-val')!
+  if (document.activeElement !== opacitySlider) {
+    opacitySlider.value = String(rect.opacity)
+  }
+  opacityVal.textContent = rect.opacity.toFixed(2)
+
   // Time range
   const timeCheckbox = document.getElementById('prop-time-enabled') as HTMLInputElement
   const timeFields = document.getElementById('time-range-fields')!
@@ -168,7 +186,7 @@ function setupPropertyInputs(): void {
     el.addEventListener('click', () => {
       const s = getState()
       if (!s.selectedId) return
-      updateRectangle(s.selectedId, { color: (el as HTMLElement).dataset.color as Color })
+      updateRectangle(s.selectedId, { color: (el as HTMLElement).dataset.color! })
     })
   })
 
@@ -178,6 +196,23 @@ function setupPropertyInputs(): void {
     if (!s.selectedId) return
     const checkbox = document.getElementById('prop-filled') as HTMLInputElement
     updateRectangle(s.selectedId, { filled: checkbox.checked })
+  })
+
+  // Opacity slider
+  document.getElementById('prop-opacity')!.addEventListener('input', () => {
+    const s = getState()
+    if (!s.selectedId) return
+    const slider = document.getElementById('prop-opacity') as HTMLInputElement
+    const val = Number(slider.value)
+    updateRectangle(s.selectedId, { opacity: val })
+  })
+
+  // Custom color picker
+  document.getElementById('prop-custom-color')!.addEventListener('input', () => {
+    const s = getState()
+    if (!s.selectedId) return
+    const input = document.getElementById('prop-custom-color') as HTMLInputElement
+    updateRectangle(s.selectedId, { color: input.value })
   })
 
   // Time range toggle
