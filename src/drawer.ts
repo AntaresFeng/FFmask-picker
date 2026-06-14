@@ -1,6 +1,6 @@
 // src/drawer.ts
 
-import { getState, setState, subscribe, addRectangle, updateRectangle, removeRectangle, createRectangle } from './state'
+import { getState, setState, subscribe, addRectangle, updateRectangle, removeRectangle, createRectangle, pushHistory } from './state'
 import { secondsToTimecode, timecodeToSeconds } from './timecode'
 import { drawboxString, allDrawboxString, exportJson, copyToClipboard, downloadFile } from './export'
 import { showToast } from './toast'
@@ -199,6 +199,7 @@ function setupPropertyInputs(): void {
       const prop = id.replace('prop-', '')
       const val = Number((document.getElementById(id) as HTMLInputElement).value)
       const mapping: Record<string, string> = { x: 'x', y: 'y', w: 'width', h: 'height', thickness: 'thickness' }
+      pushHistory()
       updateRectangle(s.selectedId, { [mapping[prop]]: val })
     })
   }
@@ -208,6 +209,7 @@ function setupPropertyInputs(): void {
     el.addEventListener('click', () => {
       const s = getState()
       if (!s.selectedId) return
+      pushHistory()
       updateRectangle(s.selectedId, { color: (el as HTMLElement).dataset.color! })
     })
   })
@@ -217,10 +219,11 @@ function setupPropertyInputs(): void {
     const s = getState()
     if (!s.selectedId) return
     const checkbox = document.getElementById('prop-filled') as HTMLInputElement
+    pushHistory()
     updateRectangle(s.selectedId, { filled: checkbox.checked })
   })
 
-  // Opacity slider
+  // Opacity slider — input updates visuals, change records history
   document.getElementById('prop-opacity')!.addEventListener('input', () => {
     const s = getState()
     if (!s.selectedId) return
@@ -228,13 +231,19 @@ function setupPropertyInputs(): void {
     const val = Number(slider.value)
     updateRectangle(s.selectedId, { opacity: val })
   })
+  document.getElementById('prop-opacity')!.addEventListener('change', () => {
+    pushHistory()
+  })
 
-  // Custom color picker
+  // Custom color picker — input updates visuals, change records history
   document.getElementById('prop-custom-color')!.addEventListener('input', () => {
     const s = getState()
     if (!s.selectedId) return
     const input = document.getElementById('prop-custom-color') as HTMLInputElement
     updateRectangle(s.selectedId, { color: input.value })
+  })
+  document.getElementById('prop-custom-color')!.addEventListener('change', () => {
+    pushHistory()
   })
 
   // Time range toggle
@@ -242,6 +251,7 @@ function setupPropertyInputs(): void {
     const s = getState()
     if (!s.selectedId) return
     const checkbox = document.getElementById('prop-time-enabled') as HTMLInputElement
+    pushHistory()
     if (checkbox.checked) {
       updateRectangle(s.selectedId, {
         timeRange: { start: 0, end: s.duration, mode: 'time' },
@@ -270,6 +280,7 @@ function setupPropertyInputs(): void {
       newStart = rect.timeRange.start / fps
       newEnd = rect.timeRange.end / fps
     }
+    pushHistory()
     updateRectangle(s.selectedId, {
       timeRange: { start: newStart, end: newEnd, mode: newMode },
     })
@@ -284,6 +295,7 @@ function setupPropertyInputs(): void {
     const val = (document.getElementById('prop-time-start') as HTMLInputElement).value
     const isFrameMode = rect.timeRange.mode === 'frame'
     const parsedVal = isFrameMode ? Number(val) : timecodeToSeconds(val, s.fps)
+    pushHistory()
     updateRectangle(s.selectedId, {
       timeRange: { ...rect.timeRange, start: parsedVal },
     })
@@ -297,6 +309,7 @@ function setupPropertyInputs(): void {
     const val = (document.getElementById('prop-time-end') as HTMLInputElement).value
     const isFrameMode = rect.timeRange.mode === 'frame'
     const parsedVal = isFrameMode ? Number(val) : timecodeToSeconds(val, s.fps)
+    pushHistory()
     updateRectangle(s.selectedId, {
       timeRange: { ...rect.timeRange, end: parsedVal },
     })

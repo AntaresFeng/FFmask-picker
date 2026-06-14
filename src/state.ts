@@ -104,7 +104,6 @@ export function addRectangle(rect: Rectangle): void {
 }
 
 export function updateRectangle(id: string, partial: Partial<Rectangle>): void {
-  pushHistory()
   setState({
     rectangles: state.rectangles.map(r => (r.id === id ? { ...r, ...partial } : r)),
   })
