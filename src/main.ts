@@ -2,6 +2,7 @@
 
 import './style.css'
 import { initCanvas, renderLoop, setLastMouse } from './canvas'
+import { pushHistory } from './state'
 import { initToolbar, loadVideoFile } from './toolbar'
 import { initDrawer } from './drawer'
 import { initInteraction } from './interaction'
@@ -51,6 +52,7 @@ function main(): void {
     setLastMouse(e.offsetX, e.offsetY)
   })
 
+  pushHistory()  // Save initial empty state for undo
   renderLoop()
 }
 

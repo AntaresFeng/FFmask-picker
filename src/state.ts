@@ -43,7 +43,7 @@ export function subscribe(listener: Listener): () => void {
   return () => { listeners.delete(listener) }
 }
 
-function notify(): void {
+export function notify(): void {
   for (const fn of listeners) fn(state)
 }
 

@@ -1,6 +1,6 @@
 // src/interaction.ts
 
-import { getState, setState, addRectangle, updateRectangle, removeRectangle, pushHistory, createRectangle, getDragState, setDragState, undo, redo } from './state'
+import { getState, setState, addRectangle, updateRectangle, removeRectangle, pushHistory, notify, createRectangle, getDragState, setDragState, undo, redo } from './state'
 import { getCanvasElement, screenToFrame, hitTestHandle, hitTestRect, getScale } from './canvas'
 
 export function initInteraction(): void {
@@ -156,6 +156,7 @@ function onMouseUp(e: MouseEvent): void {
 
   if (drag.type === 'move' || drag.type === 'resize') {
     pushHistory()
+    notify()
   }
 
   if (drag.type === 'draw') {

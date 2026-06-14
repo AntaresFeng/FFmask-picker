@@ -82,6 +82,7 @@ function renderRectList(s: ReturnType<typeof getState>): void {
       const id = (btn as HTMLElement).dataset.id!
       const rect = s.rectangles.find(r => r.id === id)
       if (rect) {
+        pushHistory()
         updateRectangle(id, { visible: !rect.visible })
       }
     })
