@@ -2,17 +2,31 @@
 
 import type { Rectangle } from './types'
 import { secondsToTimecode } from './timecode'
+import { resolveColor } from './colors'
+
+/** Convert a color to ffmpeg-compatible 0xRRGGBB format. */
+function toFfmpegColor(color: string): string {
+  const hex = resolveColor(color) // normalize named colors to #RRGGBB
+  if (hex.startsWith('#')) return '0x' + hex.slice(1)
+  if (hex.startsWith('0x')) return hex
+  return hex // Named colors (red, blue, etc.) are valid in ffmpeg drawbox
+}
 
 /**
  * Generate a single drawbox filter string for one rectangle.
  */
 export function drawboxString(rect: Rectangle, _fps: number): string {
   const t = rect.filled ? 'fill' : String(rect.thickness)
-  const color = rect.opacity < 1 ? `${rect.color}@${rect.opacity}` : rect.color
+  const ffmpegColor = toFfmpegColor(rect.color)
+  const color = rect.opacity < 1 ? `${ffmpegColor}@${+rect.opacity.toFixed(2)}` : ffmpegColor
   let s = `drawbox=x=${rect.x}:y=${rect.y}:w=${rect.width}:h=${rect.height}:color=${color}:t=${t}`
   if (rect.timeRange) {
-    const start = rect.timeRange.start
-    const end = rect.timeRange.end
+    const start = rect.timeRange.mode === 'frame'
+      ? Math.round(rect.timeRange.start)
+      : +rect.timeRange.start.toFixed(3)
+    const end = rect.timeRange.mode === 'frame'
+      ? Math.round(rect.timeRange.end)
+      : +rect.timeRange.end.toFixed(3)
     if (rect.timeRange.mode === 'frame') {
       s += `:enable='between(n,${start},${end})'`
     } else {
@@ -34,14 +48,6 @@ export function allDrawboxString(rectangles: Rectangle[], fps: number): string {
 }
 
 /**
- * Generate a full ffmpeg command string.
- */
-export function fullCommand(rectangles: Rectangle[], fps: number): string {
-  const vf = allDrawboxString(rectangles, fps)
-  return `ffmpeg -i input.mp4 -vf "${vf}" output.mp4`
-}
-
-/**
  * Export rectangles as JSON config.
  */
 export function exportJson(rectangles: Rectangle[], fps: number): string {
@@ -52,13 +58,20 @@ export function exportJson(rectangles: Rectangle[], fps: number): string {
     height: r.height,
     color: r.color,
     thickness: r.thickness,
+    filled: r.filled,
+    opacity: r.opacity,
     visible: r.visible,
     timeRange: r.timeRange
       ? {
+          mode: r.timeRange.mode,
           start: r.timeRange.start,
           end: r.timeRange.end,
-          startTimecode: secondsToTimecode(r.timeRange.start, fps),
-          endTimecode: secondsToTimecode(r.timeRange.end, fps),
+          startTimecode: r.timeRange.mode === 'frame'
+            ? secondsToTimecode(r.timeRange.start / fps, fps)
+            : secondsToTimecode(r.timeRange.start, fps),
+          endTimecode: r.timeRange.mode === 'frame'
+            ? secondsToTimecode(r.timeRange.end / fps, fps)
+            : secondsToTimecode(r.timeRange.end, fps),
         }
       : null,
   }))

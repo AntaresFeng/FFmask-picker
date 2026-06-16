@@ -3,6 +3,8 @@
 import { getState, setGlobalState, selectRectangle, subscribe, pushHistory, undo, redo, canUndo, canRedo } from './state'
 import { getVideoElement } from './canvas'
 import { formatTime } from './timecode'
+import { showToast } from './toast'
+import { resolveColor } from './colors'
 import type { AppState } from './types'
 
 let displayMode: 'frame' | 'time' = 'frame'
@@ -65,6 +67,11 @@ export function loadVideoFile(file: File): void {
 
     // Seek to first frame
     video.currentTime = 0
+  }, { once: true })
+
+  video.addEventListener('error', () => {
+    URL.revokeObjectURL(url)
+    showToast('视频加载失败，请检查文件格式')
   }, { once: true })
 }
 
@@ -191,12 +198,7 @@ function updateToolbarState(s: AppState): void {
 
   // Color preview
   const preview = document.getElementById('color-preview')!
-  const colorMap: Record<string, string> = {
-    red: '#ff4444', blue: '#4488ff', green: '#44cc44',
-    black: '#000000', white: '#ffffff', yellow: '#ffff00',
-    cyan: '#00ffff', magenta: '#ff00ff', orange: '#ff8800',
-  }
-  preview.style.background = colorMap[s.currentColor] || s.currentColor
+  preview.style.background = resolveColor(s.currentColor)
 
   // Color preset active state
   document.querySelectorAll('.color-preset').forEach(el => {
@@ -209,10 +211,12 @@ function updateToolbarState(s: AppState): void {
   // Undo/redo
   const btnUndo = document.getElementById('btn-undo') as HTMLButtonElement
   const btnRedo = document.getElementById('btn-redo') as HTMLButtonElement
-  btnUndo.disabled = !canUndo()
-  btnRedo.disabled = !canRedo()
-  btnUndo.style.opacity = canUndo() ? '1' : '0.4'
-  btnRedo.style.opacity = canRedo() ? '1' : '0.4'
+  const undoable = canUndo()
+  const redoable = canRedo()
+  btnUndo.disabled = !undoable
+  btnRedo.disabled = !redoable
+  btnUndo.style.opacity = undoable ? '1' : '0.4'
+  btnRedo.style.opacity = redoable ? '1' : '0.4'
 
   updateFrameDisplay()
 }

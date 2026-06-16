@@ -1,7 +1,7 @@
 // src/interaction.ts
 
-import { getState, setGlobalState, selectRectangle, addRectangle, updateRectangle, removeRectangle, pushHistory, createRectangle, getDragState, setDragState, undo, redo } from './state'
-import { getCanvasElement, screenToFrame, hitTestHandle, hitTestRect, getScale } from './canvas'
+import { getState, setGlobalState, selectRectangle, addRectangle, updateRectangle, removeRectangle, pushHistory, createRectangle, getDragState, setDragState, undo, redo, getSelectedRect } from './state'
+import { getCanvasElement, getVideoElement, screenToFrame, hitTestHandle, hitTestRect, getScale, getHandlePositions } from './canvas'
 
 export function initInteraction(): void {
   const canvas = getCanvasElement()
@@ -40,7 +40,7 @@ function onMouseDown(e: MouseEvent): void {
       drawStartFrameY: frame.y,
     })
   } else if (s.mode === 'select') {
-    const selected = s.rectangles.find(r => r.id === s.selectedId)
+    const selected = getSelectedRect()
     if (selected) {
       const handleIdx = hitTestHandle(selected, sx, sy)
       if (handleIdx >= 0) {
@@ -101,8 +101,9 @@ function onMouseMove(e: MouseEvent): void {
   }
 
   if (drag.type === 'move' && drag.moveRectId) {
-    const dx = (sx - drag.startX) / getScale()
-    const dy = (sy - drag.startY) / getScale()
+    const scale = getScale()
+    const dx = (sx - drag.startX) / scale
+    const dy = (sy - drag.startY) / scale
     const s = getState()
     const rect = s.rectangles.find(r => r.id === drag.moveRectId)
     if (rect) {
@@ -126,7 +127,7 @@ function onMouseMove(e: MouseEvent): void {
       x = newX
     }
     if (handle === 2 || handle === 4 || handle === 7) {
-      width = frame.x - x
+      width = Math.max(1, frame.x - x)
     }
     if (handle === 0 || handle === 1 || handle === 2) {
       const newY = Math.min(frame.y, y + height)
@@ -134,11 +135,8 @@ function onMouseMove(e: MouseEvent): void {
       y = newY
     }
     if (handle === 5 || handle === 6 || handle === 7) {
-      height = frame.y - y
+      height = Math.max(1, frame.y - y)
     }
-
-    if (width < 1) width = 1
-    if (height < 1) height = 1
 
     updateRectangle(drag.resizeRectId, {
       x: Math.round(x),
@@ -215,16 +213,11 @@ function updateCursor(e: MouseEvent): void {
   }
 
   // Select mode
-  const selected = s.rectangles.find(r => r.id === s.selectedId)
+  const selected = getSelectedRect()
   if (selected && selected.visible) {
     const handleIdx = hitTestHandle(selected, sx, sy)
     if (handleIdx >= 0) {
-      const handles = [
-        'nwse-resize', 'ns-resize', 'nesw-resize',
-        'ew-resize', 'ew-resize',
-        'nesw-resize', 'ns-resize', 'nwse-resize',
-      ]
-      canvas.style.cursor = handles[handleIdx]
+      canvas.style.cursor = getHandlePositions(selected)[handleIdx].cursor
       return
     }
   }
@@ -261,11 +254,9 @@ function onKeyDown(e: KeyboardEvent): void {
   // Space — toggle play/pause
   if (e.key === ' ') {
     e.preventDefault()
-    const video = document.querySelector('video') as HTMLVideoElement | null
-    if (video) {
-      if (video.paused) video.play()
-      else video.pause()
-    }
+    const video = getVideoElement()
+    if (video.paused) video.play()
+    else video.pause()
     return
   }
 

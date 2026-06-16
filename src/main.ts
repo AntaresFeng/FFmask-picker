@@ -6,9 +6,6 @@ import { initToolbar, loadVideoFile } from './toolbar'
 import { initDrawer } from './drawer'
 import { initInteraction } from './interaction'
 
-// Re-export showToast from toast.ts for backward compatibility
-export { showToast } from './toast'
-
 function setupUploadOverlay(): void {
   const box = document.getElementById('upload-box')!
   const fileInput = document.getElementById('file-input') as HTMLInputElement

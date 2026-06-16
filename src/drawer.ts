@@ -1,26 +1,12 @@
 // src/drawer.ts
 
-import { getState, setGlobalState, selectRectangle, subscribe, addRectangle, updateRectangle, removeRectangle, createRectangle, pushHistory } from './state'
-import { secondsToTimecode, timecodeToSeconds } from './timecode'
+import { getState, setGlobalState, selectRectangle, subscribe, addRectangle, updateRectangle, removeRectangle, createRectangle, pushHistory, getSelectedRect } from './state'
+import { secondsToTimecode, timecodeToSeconds, formatTime } from './timecode'
 import { drawboxString, allDrawboxString, exportJson, copyToClipboard, downloadFile } from './export'
 import { showToast } from './toast'
+import { resolveColor } from './colors'
 
-const COLOR_DOT_MAP: Record<string, string> = {
-  red: '#ff4444',
-  blue: '#4488ff',
-  green: '#44cc44',
-  black: '#000000',
-  white: '#ffffff',
-  yellow: '#ffff00',
-  cyan: '#00ffff',
-  magenta: '#ff00ff',
-  orange: '#ff8800',
-}
-
-function resolveColorDot(color: string): string {
-  if (color.startsWith('#') || color.startsWith('rgb')) return color
-  return COLOR_DOT_MAP[color.toLowerCase()] || color
-}
+const PROP_MAPPING: Record<string, string> = { x: 'x', y: 'y', w: 'width', h: 'height', thickness: 'thickness' }
 
 export function initDrawer(): void {
   setupToggle()
@@ -62,9 +48,9 @@ function renderRectList(s: ReturnType<typeof getState>): void {
     const item = document.createElement('div')
     item.className = `rect-item${s.selectedId === rect.id ? ' selected' : ''}`
     item.innerHTML = `
-      <div class="color-dot" style="background:${resolveColorDot(rect.color)}"></div>
+      <div class="color-dot" style="background:${resolveColor(rect.color)}"></div>
       <span class="rect-name">矩形 ${rect.id.replace('rect-', '')}</span>
-      <span class="time-hint">${rect.timeRange ? (rect.timeRange.mode === 'frame' ? `F${rect.timeRange.start}-${rect.timeRange.end}` : `${formatSeconds(rect.timeRange.start)}-${formatSeconds(rect.timeRange.end)}`) : '全视频'}</span>
+      <span class="time-hint">${rect.timeRange ? (rect.timeRange.mode === 'frame' ? `F${rect.timeRange.start}-${rect.timeRange.end}` : `${formatTime(rect.timeRange.start)}-${formatTime(rect.timeRange.end)}`) : '全视频'}</span>
       <button class="visibility-btn${rect.visible ? '' : ' hidden'}" data-id="${rect.id}">👁</button>
       <button class="delete-btn" data-id="${rect.id}" title="删除">🗑</button>
     `
@@ -99,15 +85,9 @@ function renderRectList(s: ReturnType<typeof getState>): void {
   })
 }
 
-function formatSeconds(sec: number): string {
-  const m = Math.floor(sec / 60)
-  const s = Math.floor(sec % 60)
-  return `${m}:${String(s).padStart(2, '0')}`
-}
-
 function renderPropsPanel(s: ReturnType<typeof getState>): void {
   const panel = document.getElementById('props-panel')!
-  const rect = s.rectangles.find(r => r.id === s.selectedId)
+  const rect = getSelectedRect()
 
   if (!rect) {
     panel.style.display = 'none'
@@ -199,9 +179,11 @@ function setupPropertyInputs(): void {
       const s = getState()
       if (!s.selectedId) return
       const prop = id.replace('prop-', '')
-      const val = Number((document.getElementById(id) as HTMLInputElement).value)
-      const mapping: Record<string, string> = { x: 'x', y: 'y', w: 'width', h: 'height', thickness: 'thickness' }
-      updateRectangle(s.selectedId, { [mapping[prop]]: val })
+      const raw = Number((document.getElementById(id) as HTMLInputElement).value)
+      if (!Number.isFinite(raw)) return
+      const isSize = prop === 'w' || prop === 'h' || prop === 'thickness'
+      const val = isSize ? Math.max(1, Math.round(Math.abs(raw))) : Math.round(raw)
+      updateRectangle(s.selectedId, { [PROP_MAPPING[prop]]: val })
       pushHistory()
     })
   }
@@ -267,7 +249,7 @@ function setupPropertyInputs(): void {
   document.getElementById('prop-time-mode')!.addEventListener('click', () => {
     const s = getState()
     if (!s.selectedId) return
-    const rect = s.rectangles.find(r => r.id === s.selectedId)
+    const rect = getSelectedRect()
     if (!rect?.timeRange) return
     const newMode = rect.timeRange.mode === 'frame' ? 'time' : 'frame'
     const fps = s.fps
@@ -289,33 +271,24 @@ function setupPropertyInputs(): void {
   })
 
   // Time range inputs
-  document.getElementById('prop-time-start')!.addEventListener('change', () => {
-    const s = getState()
-    if (!s.selectedId) return
-    const rect = s.rectangles.find(r => r.id === s.selectedId)
-    if (!rect?.timeRange) return
-    const val = (document.getElementById('prop-time-start') as HTMLInputElement).value
-    const isFrameMode = rect.timeRange.mode === 'frame'
-    const parsedVal = isFrameMode ? Number(val) : timecodeToSeconds(val, s.fps)
-    updateRectangle(s.selectedId, {
-      timeRange: { ...rect.timeRange, start: parsedVal },
+  function setupTimeRangeInput(inputId: string, field: 'start' | 'end'): void {
+    document.getElementById(inputId)!.addEventListener('change', () => {
+      const s = getState()
+      if (!s.selectedId) return
+      const rect = getSelectedRect()
+      if (!rect?.timeRange) return
+      const val = (document.getElementById(inputId) as HTMLInputElement).value
+      const isFrameMode = rect.timeRange.mode === 'frame'
+      const parsedVal = isFrameMode ? Math.round(Number(val)) : timecodeToSeconds(val, s.fps)
+      if (!Number.isFinite(parsedVal)) return
+      updateRectangle(s.selectedId, {
+        timeRange: { ...rect.timeRange, [field]: parsedVal },
+      })
+      pushHistory()
     })
-    pushHistory()
-  })
-
-  document.getElementById('prop-time-end')!.addEventListener('change', () => {
-    const s = getState()
-    if (!s.selectedId) return
-    const rect = s.rectangles.find(r => r.id === s.selectedId)
-    if (!rect?.timeRange) return
-    const val = (document.getElementById('prop-time-end') as HTMLInputElement).value
-    const isFrameMode = rect.timeRange.mode === 'frame'
-    const parsedVal = isFrameMode ? Number(val) : timecodeToSeconds(val, s.fps)
-    updateRectangle(s.selectedId, {
-      timeRange: { ...rect.timeRange, end: parsedVal },
-    })
-    pushHistory()
-  })
+  }
+  setupTimeRangeInput('prop-time-start', 'start')
+  setupTimeRangeInput('prop-time-end', 'end')
 }
 
 function setupExportButtons(): void {
@@ -326,19 +299,19 @@ function setupExportButtons(): void {
 
 async function exportCurrent(): Promise<void> {
   const s = getState()
-  const rect = s.rectangles.find(r => r.id === s.selectedId)
+  const rect = getSelectedRect()
   if (!rect) { showToast('请先选中一个矩形'); return }
   const text = drawboxString(rect, s.fps)
-  await copyToClipboard(text)
-  showToast('已复制到剪贴板')
+  const ok = await copyToClipboard(text)
+  showToast(ok ? '已复制到剪贴板' : '复制失败，请手动复制')
 }
 
 async function exportAll(): Promise<void> {
   const s = getState()
   if (s.rectangles.length === 0) { showToast('没有矩形'); return }
   const text = allDrawboxString(s.rectangles, s.fps)
-  await copyToClipboard(text)
-  showToast('已复制全部参数到剪贴板')
+  const ok = await copyToClipboard(text)
+  showToast(ok ? '已复制全部参数到剪贴板' : '复制失败，请手动复制')
 }
 
 function exportJsonFile(): void {

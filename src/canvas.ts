@@ -1,6 +1,7 @@
 // src/canvas.ts
 
 import { getState, getDragState } from './state'
+import { resolveColor } from './colors'
 import type { AppState, Rectangle } from './types'
 
 const HANDLE_SIZE = 8
@@ -12,25 +13,10 @@ let ctx: CanvasRenderingContext2D
 let minimapCanvas: HTMLCanvasElement
 let minimapCtx: CanvasRenderingContext2D
 let videoEl: HTMLVideoElement
+let containerEl: HTMLElement
 
-const COLOR_MAP: Record<string, string> = {
-  red: '#ff4444',
-  blue: '#4488ff',
-  green: '#44cc44',
-  black: '#000000',
-  white: '#ffffff',
-  yellow: '#ffff00',
-  cyan: '#00ffff',
-  magenta: '#ff00ff',
-  orange: '#ff8800',
-}
-
-function resolveColor(color: string): string {
-  // Already a hex color or CSS color
-  if (color.startsWith('#') || color.startsWith('rgb') || color.startsWith('hsl')) return color
-  // Named color - check map first, then try as CSS color
-  return COLOR_MAP[color.toLowerCase()] || color
-}
+/** Cached transform for the current frame; null outside render(). */
+let frameTransform: Transform | null = null
 
 export function initCanvas(): void {
   canvas = document.getElementById('main-canvas') as HTMLCanvasElement
@@ -47,11 +33,11 @@ export function initCanvas(): void {
   document.body.appendChild(videoEl)
 
   // ResizeObserver sets a pending flag; actual resize happens in renderLoop
-  const container = document.getElementById('canvas-container')!
+  containerEl = document.getElementById('canvas-container')!
   const ro = new ResizeObserver(() => {
     resizePending = true
   })
-  ro.observe(container)
+  ro.observe(containerEl)
   window.addEventListener('resize', () => { resizePending = true })
 }
 
@@ -60,10 +46,9 @@ let resizePending = true
 function applyResize(): void {
   if (!resizePending) return
   resizePending = false
-  const container = document.getElementById('canvas-container')!
-  if (container.clientWidth > 0 && container.clientHeight > 0) {
-    canvas.width = container.clientWidth
-    canvas.height = container.clientHeight
+  if (containerEl.clientWidth > 0 && containerEl.clientHeight > 0) {
+    canvas.width = containerEl.clientWidth
+    canvas.height = containerEl.clientHeight
   }
 }
 
@@ -80,13 +65,23 @@ export function getCanvasSize(): { w: number; h: number } {
 }
 
 /** Convert screen coordinates to video-frame coordinates. */
-export function screenToFrame(sx: number, sy: number): { x: number; y: number } {
+interface Transform { scale: number; offsetX: number; offsetY: number }
+
+/** Compute the current video-to-screen transform (scale, offset). Returns cached value during render. */
+function getTransform(): Transform {
+  if (frameTransform) return frameTransform
   const s = getState()
   const naturalW = videoEl.videoWidth || 1920
   const naturalH = videoEl.videoHeight || 1080
   const scale = Math.min(canvas.width / naturalW, canvas.height / naturalH) * s.zoom
   const offsetX = (canvas.width - naturalW * scale) / 2 + s.panX
   const offsetY = (canvas.height - naturalH * scale) / 2 + s.panY
+  return { scale, offsetX, offsetY }
+}
+
+/** Convert screen coordinates to video-frame coordinates. */
+export function screenToFrame(sx: number, sy: number): { x: number; y: number } {
+  const { scale, offsetX, offsetY } = getTransform()
   return {
     x: (sx - offsetX) / scale,
     y: (sy - offsetY) / scale,
@@ -95,12 +90,7 @@ export function screenToFrame(sx: number, sy: number): { x: number; y: number } 
 
 /** Convert video-frame coordinates to screen coordinates. */
 export function frameToScreen(fx: number, fy: number): { x: number; y: number } {
-  const s = getState()
-  const naturalW = videoEl.videoWidth || 1920
-  const naturalH = videoEl.videoHeight || 1080
-  const scale = Math.min(canvas.width / naturalW, canvas.height / naturalH) * s.zoom
-  const offsetX = (canvas.width - naturalW * scale) / 2 + s.panX
-  const offsetY = (canvas.height - naturalH * scale) / 2 + s.panY
+  const { scale, offsetX, offsetY } = getTransform()
   return {
     x: fx * scale + offsetX,
     y: fy * scale + offsetY,
@@ -108,10 +98,7 @@ export function frameToScreen(fx: number, fy: number): { x: number; y: number } 
 }
 
 export function getScale(): number {
-  const s = getState()
-  const naturalW = videoEl.videoWidth || 1920
-  const naturalH = videoEl.videoHeight || 1080
-  return Math.min(canvas.width / naturalW, canvas.height / naturalH) * s.zoom
+  return getTransform().scale
 }
 
 /** Get the drawbox control points (8 handles) for a rectangle in screen space. */
@@ -177,6 +164,9 @@ function render(): void {
   if (canvas.width === 0 || canvas.height === 0) return
   const s = getState()
 
+  // Cache transform for the entire frame
+  frameTransform = getTransform()
+
   // Fill background to prevent flickering
   ctx.fillStyle = '#1a1a2e'
   ctx.fillRect(0, 0, canvas.width, canvas.height)
@@ -185,9 +175,8 @@ function render(): void {
   if (videoEl.readyState >= 2) {
     const naturalW = videoEl.videoWidth
     const naturalH = videoEl.videoHeight
-    const scale = getScale()
-    const { x: ox, y: oy } = frameToScreen(0, 0)
-    ctx.drawImage(videoEl, ox, oy, naturalW * scale, naturalH * scale)
+    const { scale, offsetX, offsetY } = frameTransform
+    ctx.drawImage(videoEl, offsetX, offsetY, naturalW * scale, naturalH * scale)
   }
 
   // Draw rectangles
@@ -197,7 +186,9 @@ function render(): void {
   }
 
   // Draw minimap
-  renderMinimap(s)
+  renderMinimap()
+
+  frameTransform = null
 }
 
 function drawRectangle(rect: Rectangle, s: AppState): void {
@@ -222,7 +213,7 @@ function drawRectangle(rect: Rectangle, s: AppState): void {
   // Border
   ctx.strokeStyle = color
   ctx.lineWidth = isSelected ? 3 : 2
-  ctx.setLineDash(isSelected ? [] : [])
+  ctx.setLineDash(isSelected ? [] : [6, 4])
   ctx.strokeRect(tl.x, tl.y, w, h)
 
   // Control points for selected
@@ -252,8 +243,8 @@ export function drawTempRect(x1: number, y1: number, x2: number, y2: number, col
   ctx.restore()
 }
 
-function renderMinimap(_s: AppState): void {
-  if (!videoEl.readyState) return
+function renderMinimap(): void {
+  if (videoEl.readyState < 2) return
   minimapCtx.clearRect(0, 0, MINIMAP_W, MINIMAP_H)
   minimapCtx.fillStyle = '#2a2a3a'
   minimapCtx.fillRect(0, 0, MINIMAP_W, MINIMAP_H)
@@ -270,13 +261,12 @@ function renderMinimap(_s: AppState): void {
   minimapCtx.drawImage(videoEl, mmOx, mmOy, mmW, mmH)
   minimapCtx.globalAlpha = 1
 
-  // Draw viewport rectangle
-  const scale = getScale()
+  // Draw viewport rectangle — use cached transform from render()
+  const { scale, offsetX, offsetY } = frameTransform!
   const viewW = canvas.width / scale * mmScale
   const viewH = canvas.height / scale * mmScale
-  const { x: originX, y: originY } = frameToScreen(0, 0)
-  const vpX = mmOx + (-originX / scale) * mmScale
-  const vpY = mmOy + (-originY / scale) * mmScale
+  const vpX = mmOx + (-offsetX / scale) * mmScale
+  const vpY = mmOy + (-offsetY / scale) * mmScale
   minimapCtx.strokeStyle = '#8af'
   minimapCtx.lineWidth = 1
   minimapCtx.strokeRect(vpX, vpY, viewW, viewH)
