@@ -1,16 +1,14 @@
 // src/state.ts
 
-import type { AppState, Listener, Rectangle } from './types'
+import type { AppState, GlobalState, HistoryState, Listener, Rectangle } from './types'
 
 const MAX_HISTORY = 50
 
-let state: AppState = {
+let global: GlobalState = {
   videoSrc: null,
   fps: 30,
   duration: 0,
   currentTime: 0,
-  rectangles: [],
-  selectedId: null,
   mode: 'draw',
   currentColor: 'red',
   zoom: 1,
@@ -18,23 +16,36 @@ let state: AppState = {
   panY: 0,
 }
 
-let history: AppState[] = []
+let historyState: HistoryState = {
+  rectangles: [],
+  selectedId: null,
+}
+
+let history: HistoryState[] = []
 let historyIndex = -1
 const listeners = new Set<Listener>()
 
-function cloneState(s: AppState): AppState {
+function cloneHistoryState(h: HistoryState): HistoryState {
   return {
-    ...s,
-    rectangles: s.rectangles.map(r => ({ ...r, timeRange: r.timeRange ? { ...r.timeRange } : undefined })),
+    rectangles: h.rectangles.map(r => ({ ...r, timeRange: r.timeRange ? { ...r.timeRange } : undefined })),
+    selectedId: h.selectedId,
   }
 }
 
+/** Returns merged view of global + history state for consumers. */
 export function getState(): AppState {
-  return state
+  return { ...global, ...historyState }
 }
 
-export function setState(partial: Partial<AppState>): void {
-  state = { ...state, ...partial }
+/** Update global (non-history) fields. Does NOT record history. */
+export function setGlobalState(partial: Partial<GlobalState>): void {
+  Object.assign(global, partial)
+  notify()
+}
+
+/** Update selectedId. Does NOT record history. */
+export function selectRectangle(id: string | null): void {
+  historyState = { ...historyState, selectedId: id }
   notify()
 }
 
@@ -44,29 +55,30 @@ export function subscribe(listener: Listener): () => void {
 }
 
 export function notify(): void {
-  for (const fn of listeners) fn(state)
+  const merged = getState()
+  for (const fn of listeners) fn(merged)
 }
 
-/** Save current state to history for undo. Call BEFORE making changes. */
+/** Save current history state to undo stack. Call AFTER making changes. */
 export function pushHistory(): void {
-  // Discard any redo states
   history = history.slice(0, historyIndex + 1)
-  history.push(cloneState(state))
+  history.push(cloneHistoryState(historyState))
   if (history.length > MAX_HISTORY) history.shift()
   historyIndex = history.length - 1
+  notify()
 }
 
 export function undo(): void {
   if (historyIndex <= 0) return
   historyIndex--
-  state = cloneState(history[historyIndex])
+  historyState = cloneHistoryState(history[historyIndex])
   notify()
 }
 
 export function redo(): void {
   if (historyIndex >= history.length - 1) return
   historyIndex++
-  state = cloneState(history[historyIndex])
+  historyState = cloneHistoryState(history[historyIndex])
   notify()
 }
 
@@ -89,7 +101,7 @@ export function createRectangle(overrides?: Partial<Rectangle>): Rectangle {
     y: 0,
     width: 100,
     height: 100,
-    color: state.currentColor,
+    color: global.currentColor,
     thickness: 4,
     filled: false,
     opacity: 1,
@@ -99,27 +111,30 @@ export function createRectangle(overrides?: Partial<Rectangle>): Rectangle {
 }
 
 export function addRectangle(rect: Rectangle): void {
+  historyState = { ...historyState, rectangles: [...historyState.rectangles, rect], selectedId: rect.id }
   pushHistory()
-  setState({ rectangles: [...state.rectangles, rect], selectedId: rect.id })
 }
 
 export function updateRectangle(id: string, partial: Partial<Rectangle>): void {
-  setState({
-    rectangles: state.rectangles.map(r => (r.id === id ? { ...r, ...partial } : r)),
-  })
+  historyState = {
+    ...historyState,
+    rectangles: historyState.rectangles.map(r => (r.id === id ? { ...r, ...partial } : r)),
+  }
+  notify()
 }
 
 export function removeRectangle(id: string): void {
-  pushHistory()
-  const rects = state.rectangles.filter(r => r.id !== id)
-  setState({
+  const rects = historyState.rectangles.filter(r => r.id !== id)
+  historyState = {
+    ...historyState,
     rectangles: rects,
-    selectedId: state.selectedId === id ? null : state.selectedId,
-  })
+    selectedId: historyState.selectedId === id ? null : historyState.selectedId,
+  }
+  pushHistory()
 }
 
 export function getSelectedRect(): Rectangle | undefined {
-  return state.rectangles.find(r => r.id === state.selectedId)
+  return historyState.rectangles.find(r => r.id === historyState.selectedId)
 }
 
 // Drag state (shared between interaction and canvas to avoid circular import)

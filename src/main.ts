@@ -2,7 +2,6 @@
 
 import './style.css'
 import { initCanvas, renderLoop, setLastMouse } from './canvas'
-import { pushHistory } from './state'
 import { initToolbar, loadVideoFile } from './toolbar'
 import { initDrawer } from './drawer'
 import { initInteraction } from './interaction'
@@ -15,11 +14,6 @@ function setupUploadOverlay(): void {
   const fileInput = document.getElementById('file-input') as HTMLInputElement
 
   box.addEventListener('click', () => fileInput.click())
-
-  fileInput.addEventListener('change', () => {
-    const file = fileInput.files?.[0]
-    if (file) loadVideoFile(file)
-  })
 
   // Drag and drop
   box.addEventListener('dragover', (e) => {
@@ -52,7 +46,6 @@ function main(): void {
     setLastMouse(e.offsetX, e.offsetY)
   })
 
-  pushHistory()  // Save initial empty state for undo
   renderLoop()
 }
 

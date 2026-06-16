@@ -1,6 +1,6 @@
 // src/drawer.ts
 
-import { getState, setState, subscribe, addRectangle, updateRectangle, removeRectangle, createRectangle, pushHistory } from './state'
+import { getState, setGlobalState, selectRectangle, subscribe, addRectangle, updateRectangle, removeRectangle, createRectangle, pushHistory } from './state'
 import { secondsToTimecode, timecodeToSeconds } from './timecode'
 import { drawboxString, allDrawboxString, exportJson, copyToClipboard, downloadFile } from './export'
 import { showToast } from './toast'
@@ -70,7 +70,8 @@ function renderRectList(s: ReturnType<typeof getState>): void {
     `
     item.addEventListener('click', (e) => {
       if ((e.target as HTMLElement).classList.contains('visibility-btn')) return
-      setState({ selectedId: rect.id, mode: 'select' })
+      selectRectangle(rect.id)
+      setGlobalState({ mode: 'select' })
     })
     container.appendChild(item)
   }
@@ -82,8 +83,8 @@ function renderRectList(s: ReturnType<typeof getState>): void {
       const id = (btn as HTMLElement).dataset.id!
       const rect = s.rectangles.find(r => r.id === id)
       if (rect) {
-        pushHistory()
         updateRectangle(id, { visible: !rect.visible })
+        pushHistory()
       }
     })
   })
@@ -200,8 +201,8 @@ function setupPropertyInputs(): void {
       const prop = id.replace('prop-', '')
       const val = Number((document.getElementById(id) as HTMLInputElement).value)
       const mapping: Record<string, string> = { x: 'x', y: 'y', w: 'width', h: 'height', thickness: 'thickness' }
-      pushHistory()
       updateRectangle(s.selectedId, { [mapping[prop]]: val })
+      pushHistory()
     })
   }
 
@@ -210,8 +211,8 @@ function setupPropertyInputs(): void {
     el.addEventListener('click', () => {
       const s = getState()
       if (!s.selectedId) return
-      pushHistory()
       updateRectangle(s.selectedId, { color: (el as HTMLElement).dataset.color! })
+      pushHistory()
     })
   })
 
@@ -220,8 +221,8 @@ function setupPropertyInputs(): void {
     const s = getState()
     if (!s.selectedId) return
     const checkbox = document.getElementById('prop-filled') as HTMLInputElement
-    pushHistory()
     updateRectangle(s.selectedId, { filled: checkbox.checked })
+    pushHistory()
   })
 
   // Opacity slider — input updates visuals, change records history
@@ -252,7 +253,6 @@ function setupPropertyInputs(): void {
     const s = getState()
     if (!s.selectedId) return
     const checkbox = document.getElementById('prop-time-enabled') as HTMLInputElement
-    pushHistory()
     if (checkbox.checked) {
       updateRectangle(s.selectedId, {
         timeRange: { start: 0, end: s.duration, mode: 'time' },
@@ -260,6 +260,7 @@ function setupPropertyInputs(): void {
     } else {
       updateRectangle(s.selectedId, { timeRange: undefined })
     }
+    pushHistory()
   })
 
   // Time mode toggle
@@ -281,10 +282,10 @@ function setupPropertyInputs(): void {
       newStart = rect.timeRange.start / fps
       newEnd = rect.timeRange.end / fps
     }
-    pushHistory()
     updateRectangle(s.selectedId, {
       timeRange: { start: newStart, end: newEnd, mode: newMode },
     })
+    pushHistory()
   })
 
   // Time range inputs
@@ -296,10 +297,10 @@ function setupPropertyInputs(): void {
     const val = (document.getElementById('prop-time-start') as HTMLInputElement).value
     const isFrameMode = rect.timeRange.mode === 'frame'
     const parsedVal = isFrameMode ? Number(val) : timecodeToSeconds(val, s.fps)
-    pushHistory()
     updateRectangle(s.selectedId, {
       timeRange: { ...rect.timeRange, start: parsedVal },
     })
+    pushHistory()
   })
 
   document.getElementById('prop-time-end')!.addEventListener('change', () => {
@@ -310,10 +311,10 @@ function setupPropertyInputs(): void {
     const val = (document.getElementById('prop-time-end') as HTMLInputElement).value
     const isFrameMode = rect.timeRange.mode === 'frame'
     const parsedVal = isFrameMode ? Number(val) : timecodeToSeconds(val, s.fps)
-    pushHistory()
     updateRectangle(s.selectedId, {
       timeRange: { ...rect.timeRange, end: parsedVal },
     })
+    pushHistory()
   })
 }
 

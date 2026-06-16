@@ -20,18 +20,23 @@ export interface Rectangle {
   }
 }
 
-export interface AppState {
+export interface GlobalState {
   videoSrc: string | null // Object URL
   fps: number
   duration: number         // seconds
   currentTime: number      // seconds
-  rectangles: Rectangle[]
-  selectedId: string | null
   mode: 'draw' | 'select'
   currentColor: Color
   zoom: number
   panX: number
   panY: number
 }
+
+export interface HistoryState {
+  rectangles: Rectangle[]
+  selectedId: string | null
+}
+
+export type AppState = GlobalState & HistoryState
 
 export type Listener = (state: AppState) => void

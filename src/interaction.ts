@@ -1,6 +1,6 @@
 // src/interaction.ts
 
-import { getState, setState, addRectangle, updateRectangle, removeRectangle, pushHistory, notify, createRectangle, getDragState, setDragState, undo, redo } from './state'
+import { getState, setGlobalState, selectRectangle, addRectangle, updateRectangle, removeRectangle, pushHistory, createRectangle, getDragState, setDragState, undo, redo } from './state'
 import { getCanvasElement, screenToFrame, hitTestHandle, hitTestRect, getScale } from './canvas'
 
 export function initInteraction(): void {
@@ -60,7 +60,7 @@ function onMouseDown(e: MouseEvent): void {
       const rect = s.rectangles[i]
       if (!rect.visible) continue
       if (hitTestRect(rect, sx, sy)) {
-        setState({ selectedId: rect.id })
+        selectRectangle(rect.id)
         setDragState({
           type: 'move',
           startX: sx,
@@ -73,7 +73,7 @@ function onMouseDown(e: MouseEvent): void {
       }
     }
 
-    setState({ selectedId: null })
+    selectRectangle(null)
   }
 }
 
@@ -92,7 +92,7 @@ function onMouseMove(e: MouseEvent): void {
     const dy = sy - drag.startY
     const s = getState()
     setDragState({ ...drag, startX: sx, startY: sy })
-    setState({ panX: s.panX + dx, panY: s.panY + dy })
+    setGlobalState({ panX: s.panX + dx, panY: s.panY + dy })
     return
   }
 
@@ -156,7 +156,6 @@ function onMouseUp(e: MouseEvent): void {
 
   if (drag.type === 'move' || drag.type === 'resize') {
     pushHistory()
-    notify()
   }
 
   if (drag.type === 'draw') {
@@ -197,7 +196,7 @@ function onWheel(e: WheelEvent): void {
   const cy = sy - s.panY
   const ratio = newZoom / s.zoom
 
-  setState({
+  setGlobalState({
     zoom: newZoom,
     panX: sx - cx * ratio,
     panY: sy - cy * ratio,
@@ -271,15 +270,15 @@ function onKeyDown(e: KeyboardEvent): void {
   }
 
   // Ctrl+Z — undo
-  if (e.key === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
+  if (e.key.toLowerCase() === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
     e.preventDefault()
     undo()
     return
   }
 
   // Ctrl+Shift+Z or Ctrl+Y — redo
-  if ((e.key === 'z' && (e.ctrlKey || e.metaKey) && e.shiftKey) ||
-      (e.key === 'y' && (e.ctrlKey || e.metaKey))) {
+  if ((e.key.toLowerCase() === 'z' && (e.ctrlKey || e.metaKey) && e.shiftKey) ||
+      (e.key.toLowerCase() === 'y' && (e.ctrlKey || e.metaKey))) {
     e.preventDefault()
     redo()
     return

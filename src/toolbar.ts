@@ -1,6 +1,6 @@
 // src/toolbar.ts
 
-import { getState, setState, subscribe, undo, redo, canUndo, canRedo } from './state'
+import { getState, setGlobalState, selectRectangle, subscribe, pushHistory, undo, redo, canUndo, canRedo } from './state'
 import { getVideoElement } from './canvas'
 import { formatTime } from './timecode'
 import type { AppState } from './types'
@@ -45,12 +45,13 @@ export function loadVideoFile(file: File): void {
 
   video.addEventListener('loadedmetadata', () => {
     const fps = 30 // Default; precise FPS detection is unreliable in browsers
-    setState({
+    setGlobalState({
       videoSrc: url,
       fps,
       duration: video.duration,
       currentTime: 0,
     })
+    pushHistory() // Save initial empty rectangle state for undo
 
     // Show working UI, hide upload overlay
     document.getElementById('upload-overlay')!.style.display = 'none'
@@ -87,7 +88,7 @@ function setupPlayback(): void {
 
   video.addEventListener('timeupdate', () => {
     const s = getState()
-    setState({ currentTime: video.currentTime })
+    setGlobalState({ currentTime: video.currentTime })
     slider.value = String(Math.floor(video.currentTime * s.fps))
     updateFrameDisplay()
   })
@@ -96,7 +97,7 @@ function setupPlayback(): void {
     const s = getState()
     const frame = Number(slider.value)
     video.currentTime = frame / s.fps
-    setState({ currentTime: video.currentTime })
+    setGlobalState({ currentTime: video.currentTime })
     updateFrameDisplay()
   })
 }
@@ -126,10 +127,11 @@ function setupModeButtons(): void {
   const btnSelect = document.getElementById('btn-mode-select')!
 
   btnDraw.addEventListener('click', () => {
-    setState({ mode: 'draw', selectedId: null })
+    setGlobalState({ mode: 'draw' })
+    selectRectangle(null)
   })
   btnSelect.addEventListener('click', () => {
-    setState({ mode: 'select' })
+    setGlobalState({ mode: 'select' })
   })
 }
 
@@ -150,7 +152,7 @@ function setupColorDropdown(): void {
   document.querySelectorAll('.color-preset').forEach(el => {
     el.addEventListener('click', () => {
       const color = (el as HTMLElement).dataset.color!
-      setState({ currentColor: color })
+      setGlobalState({ currentColor: color })
       dropdown.classList.remove('open')
     })
   })
@@ -158,7 +160,7 @@ function setupColorDropdown(): void {
   // Custom color
   const customInput = document.getElementById('custom-color') as HTMLInputElement
   customInput.addEventListener('input', () => {
-    setState({ currentColor: customInput.value })
+    setGlobalState({ currentColor: customInput.value })
   })
 }
 
@@ -178,7 +180,7 @@ function setupUndoRedo(): void {
 
 function setupResetButton(): void {
   document.getElementById('btn-reset')!.addEventListener('click', () => {
-    setState({ zoom: 1, panX: 0, panY: 0 })
+    setGlobalState({ zoom: 1, panX: 0, panY: 0 })
   })
 }
 
