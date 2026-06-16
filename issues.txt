@@ -1,0 +1,6 @@
+叠加层https://chat.deepseek.com/a/chat/s/f478468a-3fb1-40c4-b6b0-34e56e5cf3d5
+界面元素大小，字体字号问题
+滚轮缩放时，中心点不在鼠标位置
+透明度滑条 board和padding,滑不到尽头https://www.kimi.com/chat/19ec52a8-6642-838b-8000-0998aaa136c1?chat_enter_method=home
+导入json功能
+fps不准不能依赖，现在的帧数时间转换，帧数输入模式都依靠fps
