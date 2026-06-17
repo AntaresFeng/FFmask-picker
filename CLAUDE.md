@@ -38,10 +38,10 @@ Consumers use `subscribe(listener)` to react to state changes. `getState()` retu
 | `state.ts` | Central store, undo/redo, rectangle CRUD, drag state |
 | `canvas.ts` | Canvas rendering loop, video frame display, coordinate transforms (`screenToFrame`/`frameToScreen`), minimap, hit testing |
 | `interaction.ts` | Mouse/keyboard handlers: draw mode (drag to create rect), select mode (click to select, drag to move/resize), wheel zoom, pan, keyboard shortcuts |
-| `toolbar.ts` | Toolbar UI wiring: upload, playback control, frame slider, mode toggle, color picker, speed selector, undo/redo buttons |
+| `toolbar.ts` | Toolbar UI wiring: upload, playback control, time slider (ms), color picker, speed selector, undo/redo buttons |
 | `drawer.ts` | Side panel: rectangle list, property editing (position, size, color, opacity, thickness, filled, time range), export buttons |
 | `export.ts` | Generate FFmpeg `drawbox` filter strings, full ffmpeg command, JSON config; clipboard and file download helpers |
-| `timecode.ts` | `HH:MM:SS:FF` ↔ seconds conversion, display formatting |
+| `timecode.ts` | Time formatting (`formatTime`) and user input parsing (`parseTimeInput`) |
 | `types.ts` | `Rectangle`, `GlobalState`, `HistoryState`, `AppState`, `Listener` types |
 | `toast.ts` | Simple toast notification |
 
@@ -55,4 +55,4 @@ Vite 8 + `vite-plugin-singlefile` produces a single self-contained HTML file wit
 
 ## Known Issues
 
-See `issues.txt` for tracked problems including FPS detection unreliability (affects timecode conversion), zoom center point offset, and UI sizing.
+See `issues.txt` for tracked problems including zoom center point offset and UI sizing.
