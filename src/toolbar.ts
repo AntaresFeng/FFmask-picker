@@ -7,12 +7,9 @@ import { showToast } from './toast'
 import { resolveColor } from './colors'
 import type { AppState } from './types'
 
-let displayMode: 'frame' | 'time' = 'frame'
-
 export function initToolbar(): void {
   setupUpload()
   setupPlayback()
-  setupDisplayToggle()
   setupModeButtons()
   setupColorDropdown()
   setupSpeedControl()
@@ -46,10 +43,8 @@ export function loadVideoFile(file: File): void {
   video.load()
 
   video.addEventListener('loadedmetadata', () => {
-    const fps = 30 // Default; precise FPS detection is unreliable in browsers
     setGlobalState({
       videoSrc: url,
-      fps,
       duration: video.duration,
       currentTime: 0,
     })
@@ -60,9 +55,9 @@ export function loadVideoFile(file: File): void {
     document.getElementById('toolbar')!.style.display = 'flex'
     document.getElementById('main-area')!.style.display = 'flex'
 
-    // Update slider
+    // Update slider — milliseconds
     const slider = document.getElementById('frame-slider') as HTMLInputElement
-    slider.max = String(Math.floor(video.duration * fps))
+    slider.max = String(Math.floor(video.duration * 1000))
     slider.value = '0'
 
     // Seek to first frame
@@ -94,25 +89,15 @@ function setupPlayback(): void {
   video.addEventListener('pause', () => { btn.textContent = '▶' })
 
   video.addEventListener('timeupdate', () => {
-    const s = getState()
     setGlobalState({ currentTime: video.currentTime })
-    slider.value = String(Math.floor(video.currentTime * s.fps))
+    slider.value = String(Math.round(video.currentTime * 1000))
     updateFrameDisplay()
   })
 
   slider.addEventListener('input', () => {
-    const s = getState()
-    const frame = Number(slider.value)
-    video.currentTime = frame / s.fps
+    const ms = Number(slider.value)
+    video.currentTime = ms / 1000
     setGlobalState({ currentTime: video.currentTime })
-    updateFrameDisplay()
-  })
-}
-
-function setupDisplayToggle(): void {
-  const display = document.getElementById('frame-display')!
-  display.addEventListener('click', () => {
-    displayMode = displayMode === 'frame' ? 'time' : 'frame'
     updateFrameDisplay()
   })
 }
@@ -120,13 +105,7 @@ function setupDisplayToggle(): void {
 function updateFrameDisplay(): void {
   const s = getState()
   const display = document.getElementById('frame-display')!
-  if (displayMode === 'frame') {
-    const current = Math.floor(s.currentTime * s.fps)
-    const total = Math.floor(s.duration * s.fps)
-    display.textContent = `${current} / ${total}`
-  } else {
-    display.textContent = `${formatTime(s.currentTime)} / ${formatTime(s.duration)}`
-  }
+  display.textContent = `${formatTime(s.currentTime)} / ${formatTime(s.duration)}`
 }
 
 function setupModeButtons(): void {
