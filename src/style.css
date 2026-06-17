@@ -431,22 +431,6 @@ button.primary {
   font-size: 11px;
 }
 
-.time-mode-btn {
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  padding: 1px 6px;
-  border-radius: 3px;
-  font-size: 10px;
-  cursor: pointer;
-  margin-left: auto;
-}
-
-.time-mode-btn:hover {
-  background: var(--accent);
-  color: var(--text-primary);
-}
-
 /* --- Export area --- */
 .export-area {
   padding: 6px;
