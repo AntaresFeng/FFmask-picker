@@ -14,15 +14,13 @@ export interface Rectangle {
   opacity: number // 0.0 - 1.0
   visible: boolean
   timeRange?: {
-    start: number // seconds or frame number
-    end: number   // seconds or frame number
-    mode: 'time' | 'frame'
+    start: number // seconds
+    end: number   // seconds
   }
 }
 
 export interface GlobalState {
   videoSrc: string | null // Object URL
-  fps: number
   duration: number         // seconds
   currentTime: number      // seconds
   mode: 'draw' | 'select'
