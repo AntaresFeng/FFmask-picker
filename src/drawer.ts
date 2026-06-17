@@ -37,7 +37,7 @@ function setupAddButton(): void {
 
 function renderDrawer(s: ReturnType<typeof getState>): void {
   renderRectList(s)
-  renderPropsPanel(s)
+  renderPropsPanel()
 }
 
 function renderRectList(s: ReturnType<typeof getState>): void {
@@ -88,7 +88,7 @@ function renderRectList(s: ReturnType<typeof getState>): void {
   })
 }
 
-function renderPropsPanel(_s: ReturnType<typeof getState>): void {
+function renderPropsPanel(): void {
   const panel = document.getElementById('props-panel')!
   const rect = getSelectedRect()
 
@@ -236,7 +236,7 @@ function setupPropertyInputs(): void {
       if (!rect?.timeRange) return
       const val = (document.getElementById(inputId) as HTMLInputElement).value
       const parsedVal = parseTimeInput(val)
-      if (!Number.isFinite(parsedVal)) return
+      if (parsedVal < 0) return
       updateRectangle(s.selectedId, {
         timeRange: { ...rect.timeRange, [field]: parsedVal },
       })

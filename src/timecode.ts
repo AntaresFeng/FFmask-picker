@@ -26,29 +26,23 @@ export function parseTimeInput(text: string): number {
   if (!trimmed) return 0
 
   const parts = trimmed.split(':')
-  try {
-    if (parts.length === 1) {
-      // SS or SS.mmm
-      const val = Number(parts[0])
-      return Number.isFinite(val) && val >= 0 ? val : 0
-    }
-    if (parts.length === 2) {
-      // MM:SS or MM:SS.mmm
-      const mm = Number(parts[0])
-      const ss = Number(parts[1])
-      if (!Number.isFinite(mm) || !Number.isFinite(ss)) return 0
-      return mm * 60 + ss
-    }
-    if (parts.length === 3) {
-      // HH:MM:SS or HH:MM:SS.mmm
-      const hh = Number(parts[0])
-      const mm = Number(parts[1])
-      const ss = Number(parts[2])
-      if (!Number.isFinite(hh) || !Number.isFinite(mm) || !Number.isFinite(ss)) return 0
-      return hh * 3600 + mm * 60 + ss
-    }
-    return 0
-  } catch {
-    return 0
+
+  if (parts.length === 1) {
+    const val = Number(parts[0])
+    return Number.isFinite(val) && val >= 0 ? val : 0
   }
+  if (parts.length === 2) {
+    const mm = Number(parts[0])
+    const ss = Number(parts[1])
+    if (!Number.isFinite(mm) || !Number.isFinite(ss) || mm < 0 || ss < 0) return 0
+    return mm * 60 + ss
+  }
+  if (parts.length === 3) {
+    const hh = Number(parts[0])
+    const mm = Number(parts[1])
+    const ss = Number(parts[2])
+    if (!Number.isFinite(hh) || !Number.isFinite(mm) || !Number.isFinite(ss) || hh < 0 || mm < 0 || ss < 0) return 0
+    return hh * 3600 + mm * 60 + ss
+  }
+  return 0
 }
