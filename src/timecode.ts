@@ -1,37 +1,6 @@
 // src/timecode.ts
 
 /**
- * Convert total seconds to HH:MM:SS:FF timecode string.
- * @param totalSeconds - Time in seconds (can be fractional)
- * @param fps - Frames per second
- * @returns Timecode string like "00:01:23:15"
- */
-export function secondsToTimecode(totalSeconds: number, fps: number): string {
-  if (totalSeconds < 0) totalSeconds = 0
-  const totalFrames = Math.floor(totalSeconds * fps)
-  const ff = totalFrames % fps
-  const totalSec = Math.floor(totalFrames / fps)
-  const ss = totalSec % 60
-  const totalMin = Math.floor(totalSec / 60)
-  const mm = totalMin % 60
-  const hh = Math.floor(totalMin / 60)
-  return [hh, mm, ss, ff].map(v => String(v).padStart(2, '0')).join(':')
-}
-
-/**
- * Convert HH:MM:SS:FF timecode string to total seconds.
- * @param timecode - Timecode string "HH:MM:SS:FF"
- * @param fps - Frames per second
- * @returns Time in seconds
- */
-export function timecodeToSeconds(timecode: string, fps: number): number {
-  const parts = timecode.split(':').map(Number)
-  if (parts.length !== 4 || parts.some(isNaN)) return 0
-  const [hh, mm, ss, ff] = parts
-  return hh * 3600 + mm * 60 + ss + ff / fps
-}
-
-/**
  * Format seconds as MM:SS or HH:MM:SS for display.
  */
 export function formatTime(totalSeconds: number): string {
@@ -45,4 +14,41 @@ export function formatTime(totalSeconds: number): string {
     return `${hh}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`
   }
   return `${mm}:${String(ss).padStart(2, '0')}`
+}
+
+/**
+ * Parse a user-entered time string into seconds.
+ * Accepted formats: "SS", "SS.mmm", "MM:SS", "MM:SS.mmm", "HH:MM:SS", "HH:MM:SS.mmm"
+ * Returns 0 for unparseable input.
+ */
+export function parseTimeInput(text: string): number {
+  const trimmed = text.trim()
+  if (!trimmed) return 0
+
+  const parts = trimmed.split(':')
+  try {
+    if (parts.length === 1) {
+      // SS or SS.mmm
+      const val = Number(parts[0])
+      return Number.isFinite(val) && val >= 0 ? val : 0
+    }
+    if (parts.length === 2) {
+      // MM:SS or MM:SS.mmm
+      const mm = Number(parts[0])
+      const ss = Number(parts[1])
+      if (!Number.isFinite(mm) || !Number.isFinite(ss)) return 0
+      return mm * 60 + ss
+    }
+    if (parts.length === 3) {
+      // HH:MM:SS or HH:MM:SS.mmm
+      const hh = Number(parts[0])
+      const mm = Number(parts[1])
+      const ss = Number(parts[2])
+      if (!Number.isFinite(hh) || !Number.isFinite(mm) || !Number.isFinite(ss)) return 0
+      return hh * 3600 + mm * 60 + ss
+    }
+    return 0
+  } catch {
+    return 0
+  }
 }
