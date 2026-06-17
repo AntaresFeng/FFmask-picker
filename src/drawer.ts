@@ -1,7 +1,7 @@
 // src/drawer.ts
 
 import { getState, setGlobalState, selectRectangle, subscribe, addRectangle, updateRectangle, removeRectangle, createRectangle, pushHistory, getSelectedRect } from './state'
-import { secondsToTimecode, timecodeToSeconds, formatTime } from './timecode'
+import { formatTime, parseTimeInput } from './timecode'
 import { drawboxString, allDrawboxString, exportJson, copyToClipboard, downloadFile } from './export'
 import { showToast } from './toast'
 import { resolveColor } from './colors'
@@ -47,10 +47,13 @@ function renderRectList(s: ReturnType<typeof getState>): void {
   for (const rect of s.rectangles) {
     const item = document.createElement('div')
     item.className = `rect-item${s.selectedId === rect.id ? ' selected' : ''}`
+    const timeHint = rect.timeRange
+      ? `${formatTime(rect.timeRange.start)}-${formatTime(rect.timeRange.end)}`
+      : '全视频'
     item.innerHTML = `
       <div class="color-dot" style="background:${resolveColor(rect.color)}"></div>
       <span class="rect-name">矩形 ${rect.id.replace('rect-', '')}</span>
-      <span class="time-hint">${rect.timeRange ? (rect.timeRange.mode === 'frame' ? `F${rect.timeRange.start}-${rect.timeRange.end}` : `${formatTime(rect.timeRange.start)}-${formatTime(rect.timeRange.end)}`) : '全视频'}</span>
+      <span class="time-hint">${timeHint}</span>
       <button class="visibility-btn${rect.visible ? '' : ' hidden'}" data-id="${rect.id}">👁</button>
       <button class="delete-btn" data-id="${rect.id}" title="删除">🗑</button>
     `
@@ -85,7 +88,7 @@ function renderRectList(s: ReturnType<typeof getState>): void {
   })
 }
 
-function renderPropsPanel(s: ReturnType<typeof getState>): void {
+function renderPropsPanel(_s: ReturnType<typeof getState>): void {
   const panel = document.getElementById('props-panel')!
   const rect = getSelectedRect()
 
@@ -137,38 +140,17 @@ function renderPropsPanel(s: ReturnType<typeof getState>): void {
   timeCheckbox.checked = hasTime
   timeFields.style.display = hasTime ? '' : 'none'
 
-  // Time mode toggle
-  const timeModeBtn = document.getElementById('prop-time-mode')!
-  const timeStartLabel = document.getElementById('time-start-label')!
-  const timeEndLabel = document.getElementById('time-end-label')!
-  const isFrameMode = rect.timeRange?.mode === 'frame'
-  timeModeBtn.textContent = isFrameMode ? '帧数' : '时间'
-  timeStartLabel.textContent = isFrameMode ? '起始帧' : '开始'
-  timeEndLabel.textContent = isFrameMode ? '结束帧' : '结束'
-
   if (hasTime && rect.timeRange) {
-    const fps = s.fps
     const startInput = document.getElementById('prop-time-start') as HTMLInputElement
     const endInput = document.getElementById('prop-time-end') as HTMLInputElement
-    if (isFrameMode) {
-      if (document.activeElement !== startInput) {
-        startInput.value = String(Math.round(rect.timeRange.start))
-      }
-      if (document.activeElement !== endInput) {
-        endInput.value = String(Math.round(rect.timeRange.end))
-      }
-      startInput.placeholder = '帧数'
-      endInput.placeholder = '帧数'
-    } else {
-      if (document.activeElement !== startInput) {
-        startInput.value = secondsToTimecode(rect.timeRange.start, fps)
-      }
-      if (document.activeElement !== endInput) {
-        endInput.value = secondsToTimecode(rect.timeRange.end, fps)
-      }
-      startInput.placeholder = 'HH:MM:SS:FF'
-      endInput.placeholder = 'HH:MM:SS:FF'
+    if (document.activeElement !== startInput) {
+      startInput.value = formatTime(rect.timeRange.start)
     }
+    if (document.activeElement !== endInput) {
+      endInput.value = formatTime(rect.timeRange.end)
+    }
+    startInput.placeholder = 'HH:MM:SS'
+    endInput.placeholder = 'HH:MM:SS'
   }
 }
 
@@ -237,36 +219,11 @@ function setupPropertyInputs(): void {
     const checkbox = document.getElementById('prop-time-enabled') as HTMLInputElement
     if (checkbox.checked) {
       updateRectangle(s.selectedId, {
-        timeRange: { start: 0, end: s.duration, mode: 'time' },
+        timeRange: { start: 0, end: s.duration },
       })
     } else {
       updateRectangle(s.selectedId, { timeRange: undefined })
     }
-    pushHistory()
-  })
-
-  // Time mode toggle
-  document.getElementById('prop-time-mode')!.addEventListener('click', () => {
-    const s = getState()
-    if (!s.selectedId) return
-    const rect = getSelectedRect()
-    if (!rect?.timeRange) return
-    const newMode = rect.timeRange.mode === 'frame' ? 'time' : 'frame'
-    const fps = s.fps
-    let newStart = rect.timeRange.start
-    let newEnd = rect.timeRange.end
-    if (newMode === 'frame') {
-      // Convert seconds to frame numbers
-      newStart = Math.round(rect.timeRange.start * fps)
-      newEnd = Math.round(rect.timeRange.end * fps)
-    } else {
-      // Convert frame numbers to seconds
-      newStart = rect.timeRange.start / fps
-      newEnd = rect.timeRange.end / fps
-    }
-    updateRectangle(s.selectedId, {
-      timeRange: { start: newStart, end: newEnd, mode: newMode },
-    })
     pushHistory()
   })
 
@@ -278,8 +235,7 @@ function setupPropertyInputs(): void {
       const rect = getSelectedRect()
       if (!rect?.timeRange) return
       const val = (document.getElementById(inputId) as HTMLInputElement).value
-      const isFrameMode = rect.timeRange.mode === 'frame'
-      const parsedVal = isFrameMode ? Math.round(Number(val)) : timecodeToSeconds(val, s.fps)
+      const parsedVal = parseTimeInput(val)
       if (!Number.isFinite(parsedVal)) return
       updateRectangle(s.selectedId, {
         timeRange: { ...rect.timeRange, [field]: parsedVal },
@@ -298,10 +254,9 @@ function setupExportButtons(): void {
 }
 
 async function exportCurrent(): Promise<void> {
-  const s = getState()
   const rect = getSelectedRect()
   if (!rect) { showToast('请先选中一个矩形'); return }
-  const text = drawboxString(rect, s.fps)
+  const text = drawboxString(rect)
   const ok = await copyToClipboard(text)
   showToast(ok ? '已复制到剪贴板' : '复制失败，请手动复制')
 }
@@ -309,7 +264,7 @@ async function exportCurrent(): Promise<void> {
 async function exportAll(): Promise<void> {
   const s = getState()
   if (s.rectangles.length === 0) { showToast('没有矩形'); return }
-  const text = allDrawboxString(s.rectangles, s.fps)
+  const text = allDrawboxString(s.rectangles)
   const ok = await copyToClipboard(text)
   showToast(ok ? '已复制全部参数到剪贴板' : '复制失败，请手动复制')
 }
@@ -317,7 +272,7 @@ async function exportAll(): Promise<void> {
 function exportJsonFile(): void {
   const s = getState()
   if (s.rectangles.length === 0) { showToast('没有矩形'); return }
-  const json = exportJson(s.rectangles, s.fps)
+  const json = exportJson(s.rectangles)
   downloadFile(json, 'ffmask-config.json', 'application/json')
   showToast('JSON 文件已下载')
 }
