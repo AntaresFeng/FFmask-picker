@@ -6,7 +6,6 @@ const MAX_HISTORY = 50
 
 let global: GlobalState = {
   videoSrc: null,
-  fps: 30,
   duration: 0,
   currentTime: 0,
   mode: 'draw',
