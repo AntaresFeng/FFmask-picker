@@ -28,7 +28,7 @@
         <!-- Frame navigation -->
         <div class="toolbar-group" style="flex:1;min-width:0">
           <button id="btn-play" title="播放/暂停">▶</button>
-          <span id="frame-display" title="点击切换帧数/时间码">0 / 0</span>
+          <span id="frame-display">0:00 / 0:00</span>
           <input type="range" id="frame-slider" min="0" max="100" value="0" />
           <select id="speed-select" title="播放倍速">
             <option value="0.25">0.25x</option>
@@ -134,11 +134,10 @@
               <div class="time-range-toggle">
                 <input type="checkbox" id="prop-time-enabled" />
                 <label for="prop-time-enabled">时间范围</label>
-                <button id="prop-time-mode" class="time-mode-btn" title="切换时间/帧数模式">时间</button>
               </div>
               <div class="time-range-fields" id="time-range-fields" style="display:none">
-                <label id="time-start-label">开始</label><input type="text" id="prop-time-start" placeholder="HH:MM:SS:FF" />
-                <label id="time-end-label">结束</label><input type="text" id="prop-time-end" placeholder="HH:MM:SS:FF" />
+                <input type="text" id="prop-time-start" placeholder="开始 (HH:MM:SS)" />
+                <input type="text" id="prop-time-end" placeholder="结束 (HH:MM:SS)" />
               </div>
             </div>
           </div>
