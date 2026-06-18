@@ -1,9 +1,10 @@
 // src/toolbar.ts
 
-import { getState, setGlobalState, selectRectangle, subscribe, pushHistory, undo, redo, canUndo, canRedo } from './state'
+import { getState, setGlobalState, selectRectangle, subscribe, pushHistory, undo, redo, canUndo, canRedo, setRectangles } from './state'
 import { getVideoElement, clearFrameCache } from './canvas'
 import { formatTime } from './timecode'
 import { showToast } from './toast'
+import { importJson } from './export'
 import { resolveColor } from './colors'
 import type { AppState } from './types'
 
@@ -15,6 +16,7 @@ export function initToolbar(): void {
   setupSpeedControl()
   setupUndoRedo()
   setupResetButton()
+  setupImport()
 
   subscribe(updateToolbarState)
   updateToolbarState(getState())
@@ -168,6 +170,39 @@ function setupUndoRedo(): void {
 function setupResetButton(): void {
   document.getElementById('btn-reset')!.addEventListener('click', () => {
     setGlobalState({ zoom: 1, panX: 0, panY: 0 })
+  })
+}
+
+function setupImport(): void {
+  const btn = document.getElementById('btn-import')!
+  const fileInput = document.getElementById('import-input') as HTMLInputElement
+
+  btn.addEventListener('click', () => fileInput.click())
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const text = reader.result as string
+      const { rects, errors } = importJson(text)
+
+      if (rects.length > 0) {
+        setRectangles(rects)
+        const msg = `已导入 ${rects.length} 个矩形`
+        showToast(errors.length > 0 ? `${msg}（跳过 ${errors.length} 个无效项）` : msg)
+      } else if (errors.length > 0) {
+        showToast(`导入失败：${errors[0]}`)
+      } else {
+        setRectangles([])
+        showToast('已导入 0 个矩形（配置为空）')
+      }
+    }
+    reader.readAsText(file)
+
+    // Reset so re-importing the same file triggers change
+    fileInput.value = ''
   })
 }
 
