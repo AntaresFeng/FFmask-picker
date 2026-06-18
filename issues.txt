@@ -1,6 +1,21 @@
-叠加层https://chat.deepseek.com/a/chat/s/f478468a-3fb1-40c4-b6b0-34e56e5cf3d5
-界面元素大小，字体字号问题
-滚轮缩放时，中心点不在鼠标位置
-透明度滑条 board和padding,滑不到尽头https://www.kimi.com/chat/19ec52a8-6642-838b-8000-0998aaa136c1?chat_enter_method=home
-导入json功能
-~~fps不准不能依赖~~ → 已彻底移除 fps 依赖，统一为时间（秒）模式
+# FFmask Picker 问题跟踪
+
+## UI / 布局
+
+- 侧边栏收缩，复制按钮没有跟着消失
+- 复位画布按钮移到导航条group和绘制选择group之间
+
+## 画布交互
+
+- 滚轮缩放时，中心点不在鼠标位置
+- 叠加层
+  - 参考: https://chat.deepseek.com/a/chat/s/f478468a-3fb1-40c4-b6b0-34e56e5cf3d5
+
+## 功能缺失
+
+- 导入 JSON 功能
+
+
+## 性能
+
+full DOM teardown on every state change, double notify() pattern

@@ -10,7 +10,6 @@ const PROP_MAPPING: Record<string, string> = { x: 'x', y: 'y', w: 'width', h: 'h
 
 export function initDrawer(): void {
   setupToggle()
-  setupAddButton()
   setupPropertyInputs()
   setupExportButtons()
 
@@ -28,21 +27,22 @@ function setupToggle(): void {
   })
 }
 
-function setupAddButton(): void {
-  document.getElementById('btn-add-rect')!.addEventListener('click', () => {
-    const rect = createRectangle()
-    addRectangle(rect)
-  })
-}
 
 function renderDrawer(s: ReturnType<typeof getState>): void {
   renderRectList(s)
   renderPropsPanel()
 }
 
+let addBtnCreated = false
+
 function renderRectList(s: ReturnType<typeof getState>): void {
   const container = document.getElementById('rect-list')!
+  const scrollTop = container.scrollTop
+
+  // Remove rect items but preserve the add button if it exists
+  const existingBtn = container.querySelector('.add-rect-btn')
   container.innerHTML = ''
+  if (existingBtn) container.appendChild(existingBtn)
 
   for (const rect of s.rectangles) {
     const item = document.createElement('div')
@@ -62,7 +62,7 @@ function renderRectList(s: ReturnType<typeof getState>): void {
       selectRectangle(rect.id)
       setGlobalState({ mode: 'select' })
     })
-    container.appendChild(item)
+    container.insertBefore(item, existingBtn)
   }
 
   // Visibility buttons
@@ -70,7 +70,7 @@ function renderRectList(s: ReturnType<typeof getState>): void {
     btn.addEventListener('click', (e) => {
       e.stopPropagation()
       const id = (btn as HTMLElement).dataset.id!
-      const rect = s.rectangles.find(r => r.id === id)
+      const rect = getState().rectangles.find(r => r.id === id)
       if (rect) {
         updateRectangle(id, { visible: !rect.visible })
         pushHistory()
@@ -86,6 +86,22 @@ function renderRectList(s: ReturnType<typeof getState>): void {
       removeRectangle(id)
     })
   })
+
+  // Create add button once (persists across renders)
+  if (!addBtnCreated) {
+    const addBtn = document.createElement('button')
+    addBtn.className = 'add-rect-btn'
+    addBtn.textContent = '+ 添加矩形'
+    addBtn.addEventListener('click', () => {
+      const rect = createRectangle()
+      addRectangle(rect)
+    })
+    container.appendChild(addBtn)
+    addBtnCreated = true
+  }
+
+  // Restore scroll position
+  container.scrollTop = scrollTop
 }
 
 function renderPropsPanel(): void {
