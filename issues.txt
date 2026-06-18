@@ -1,5 +1,2 @@
 # FFmask Picker 问题跟踪
 
-## 功能缺失
-
-- 导入 JSON 功能
