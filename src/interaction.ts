@@ -216,6 +216,7 @@ function onContextMenu(e: MouseEvent): void {
     selectRectangle(null)
     setGlobalState({ mode: 'draw' })
   }
+  updateCursor(e)
 }
 
 function updateCursor(e: MouseEvent): void {
