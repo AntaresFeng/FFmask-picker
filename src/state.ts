@@ -136,9 +136,10 @@ export function getSelectedRect(): Rectangle | undefined {
   return historyState.rectangles.find(r => r.id === historyState.selectedId)
 }
 
-/** Replace all rectangles and clear selection. Pushes history. */
-export function setRectangles(rects: Rectangle[]): void {
-  historyState = { rectangles: rects, selectedId: null }
+/** Replace all rectangles (assigning fresh IDs) and clear selection. Pushes history. */
+export function setRectangles(rects: Omit<Rectangle, 'id'>[]): void {
+  const withIds = rects.map(r => ({ ...r, id: `rect-${nextId++}` }))
+  historyState = { rectangles: withIds, selectedId: null }
   pushHistory()
 }
 

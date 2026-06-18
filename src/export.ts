@@ -91,7 +91,7 @@ export function downloadFile(content: string, filename: string, mimeType: string
  * Parse JSON text and return validated rectangles.
  * Returns only valid rects; records errors for invalid items.
  */
-export function importJson(text: string): { rects: Rectangle[]; errors: string[] } {
+export function importJson(text: string): { rects: Omit<Rectangle, 'id'>[]; errors: string[] } {
   const errors: string[] = []
   let data: unknown
 
@@ -105,7 +105,7 @@ export function importJson(text: string): { rects: Rectangle[]; errors: string[]
     return { rects: [], errors: ['JSON 根元素必须是数组'] }
   }
 
-  const rects: Rectangle[] = []
+  const rects: Omit<Rectangle, 'id'>[] = []
 
   for (let i = 0; i < data.length; i++) {
     const item = data[i]
@@ -124,8 +124,7 @@ export function importJson(text: string): { rects: Rectangle[]; errors: string[]
       continue
     }
 
-    const rect: Rectangle = {
-      id: `imported-${i}`,
+    const rect: Omit<Rectangle, 'id'> = {
       x: x as number,
       y: y as number,
       width: width as number,
