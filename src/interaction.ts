@@ -10,7 +10,7 @@ export function initInteraction(): void {
   canvas.addEventListener('mousemove', onMouseMove)
   canvas.addEventListener('mouseup', onMouseUp)
   canvas.addEventListener('wheel', onWheel, { passive: false })
-  canvas.addEventListener('contextmenu', e => e.preventDefault())
+  canvas.addEventListener('contextmenu', onContextMenu)
 
   // Keyboard shortcuts
   document.addEventListener('keydown', onKeyDown)
@@ -205,6 +205,17 @@ function onWheel(e: WheelEvent): void {
     panX: e.offsetX - frame.x * newScale - newCenterX,
     panY: e.offsetY - frame.y * newScale - newCenterY,
   })
+}
+
+function onContextMenu(e: MouseEvent): void {
+  e.preventDefault()
+  const s = getState()
+  if (s.mode === 'draw') {
+    setGlobalState({ mode: 'select' })
+  } else {
+    selectRectangle(null)
+    setGlobalState({ mode: 'draw' })
+  }
 }
 
 function updateCursor(e: MouseEvent): void {
