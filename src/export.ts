@@ -86,3 +86,69 @@ export function downloadFile(content: string, filename: string, mimeType: string
   a.click()
   URL.revokeObjectURL(url)
 }
+
+/**
+ * Parse JSON text and return validated rectangles.
+ * Returns only valid rects; records errors for invalid items.
+ */
+export function importJson(text: string): { rects: Rectangle[]; errors: string[] } {
+  const errors: string[] = []
+  let data: unknown
+
+  try {
+    data = JSON.parse(text)
+  } catch {
+    return { rects: [], errors: ['JSON 解析失败'] }
+  }
+
+  if (!Array.isArray(data)) {
+    return { rects: [], errors: ['JSON 根元素必须是数组'] }
+  }
+
+  const rects: Rectangle[] = []
+
+  for (let i = 0; i < data.length; i++) {
+    const item = data[i]
+    const prefix = `矩形 ${i + 1}`
+
+    if (typeof item !== 'object' || item === null) {
+      errors.push(`${prefix}：不是对象`)
+      continue
+    }
+
+    const { x, y, width, height } = item as Record<string, unknown>
+
+    if (!isFiniteNum(x) || !isFiniteNum(y) || !isFiniteNum(width) || !isFiniteNum(height)) {
+      errors.push(`${prefix}：x/y/width/height 必须为数字`)
+      continue
+    }
+
+    const rect: Rectangle = {
+      id: `imported-${i}`,
+      x: x as number,
+      y: y as number,
+      width: width as number,
+      height: height as number,
+      color: typeof (item as any).color === 'string' ? (item as any).color : 'red',
+      thickness: isFiniteNum((item as any).thickness) ? (item as any).thickness : 4,
+      filled: typeof (item as any).filled === 'boolean' ? (item as any).filled : false,
+      opacity: isFiniteNum((item as any).opacity) ? (item as any).opacity : 1,
+      visible: typeof (item as any).visible === 'boolean' ? (item as any).visible : true,
+    }
+
+    const tr = (item as any).timeRange
+    if (tr !== null && tr !== undefined) {
+      if (isFiniteNum(tr?.start) && isFiniteNum(tr?.end)) {
+        rect.timeRange = { start: tr.start, end: tr.end }
+      }
+    }
+
+    rects.push(rect)
+  }
+
+  return { rects, errors }
+}
+
+function isFiniteNum(v: unknown): v is number {
+  return typeof v === 'number' && Number.isFinite(v)
+}
