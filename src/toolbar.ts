@@ -199,6 +199,9 @@ function setupImport(): void {
         showToast('已导入 0 个矩形（配置为空）')
       }
     }
+    reader.onerror = () => {
+      showToast('文件读取失败')
+    }
     reader.readAsText(file)
 
     // Reset so re-importing the same file triggers change

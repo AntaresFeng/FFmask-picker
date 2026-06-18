@@ -116,7 +116,8 @@ export function importJson(text: string): { rects: Rectangle[]; errors: string[]
       continue
     }
 
-    const { x, y, width, height } = item as Record<string, unknown>
+    const obj = item as Record<string, unknown>
+    const { x, y, width, height } = obj
 
     if (!isFiniteNum(x) || !isFiniteNum(y) || !isFiniteNum(width) || !isFiniteNum(height)) {
       errors.push(`${prefix}：x/y/width/height 必须为数字`)
@@ -129,17 +130,17 @@ export function importJson(text: string): { rects: Rectangle[]; errors: string[]
       y: y as number,
       width: width as number,
       height: height as number,
-      color: typeof (item as any).color === 'string' ? (item as any).color : 'red',
-      thickness: isFiniteNum((item as any).thickness) ? (item as any).thickness : 4,
-      filled: typeof (item as any).filled === 'boolean' ? (item as any).filled : false,
-      opacity: isFiniteNum((item as any).opacity) ? (item as any).opacity : 1,
-      visible: typeof (item as any).visible === 'boolean' ? (item as any).visible : true,
+      color: typeof obj.color === 'string' ? obj.color : 'red',
+      thickness: isFiniteNum(obj.thickness) ? (obj.thickness as number) : 4,
+      filled: typeof obj.filled === 'boolean' ? obj.filled : false,
+      opacity: isFiniteNum(obj.opacity) ? (obj.opacity as number) : 1,
+      visible: typeof obj.visible === 'boolean' ? obj.visible : true,
     }
 
-    const tr = (item as any).timeRange
+    const tr = obj.timeRange as Record<string, unknown> | null | undefined
     if (tr !== null && tr !== undefined) {
-      if (isFiniteNum(tr?.start) && isFiniteNum(tr?.end)) {
-        rect.timeRange = { start: tr.start, end: tr.end }
+      if (isFiniteNum(tr.start) && isFiniteNum(tr.end)) {
+        rect.timeRange = { start: tr.start as number, end: tr.end as number }
       }
     }
 
