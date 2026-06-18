@@ -136,6 +136,12 @@ export function getSelectedRect(): Rectangle | undefined {
   return historyState.rectangles.find(r => r.id === historyState.selectedId)
 }
 
+/** Replace all rectangles and clear selection. Pushes history. */
+export function setRectangles(rects: Rectangle[]): void {
+  historyState = { rectangles: rects, selectedId: null }
+  pushHistory()
+}
+
 // Drag state (shared between interaction and canvas to avoid circular import)
 export interface DragState {
   type: 'draw' | 'move' | 'resize' | 'pan'
