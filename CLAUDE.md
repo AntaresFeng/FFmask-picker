@@ -10,7 +10,8 @@ FFmask Picker is a browser-based visual tool for creating FFmpeg `drawbox` filte
 
 ```bash
 pnpm dev       # Start Vite dev server
-pnpm build     # Type-check (tsc) + build → dist/ffmask-picker.html (single file, all assets inlined)
+pnpm typecheck # Type-check (tsc)
+pnpm build     # build → dist/ffmask-picker.html (single file, all assets inlined)
 pnpm preview   # Preview production build
 ```
 
@@ -27,7 +28,7 @@ Custom pub/sub store with a **split-state design**:
 - **`GlobalState`** — non-undoable: video info, zoom/pan, draw/select mode, current color
 - **`HistoryState`** — undoable: `rectangles[]` and `selectedId`. Backed by a history stack (max 50 entries) for undo/redo.
 
-`pushHistory()` must be called **explicitly after discrete actions** (add, delete, move-end, resize-end, property change). Do NOT call it during continuous operations (slider drag, mouse move, opacity slide). `updateRectangle()` updates state without history; `addRectangle()`/`removeRectangle()` auto-push history.
+`pushHistory()` must be called **explicitly after discrete actions** (add, delete, move-end, resize-end, property change). Do NOT call it during continuous operations (slider drag, mouse move, opacity slide). `updateRectangle()` silently updates state (no history, no notify); callers must follow with `pushHistory()` (which notifies) or call `notify()` directly for non-history updates. `addRectangle()`/`removeRectangle()` auto-push history.
 
 Consumers use `subscribe(listener)` to react to state changes. `getState()` returns the merged `AppState` (GlobalState + HistoryState).
 

@@ -15,6 +15,10 @@ let minimapCtx: CanvasRenderingContext2D
 let videoEl: HTMLVideoElement
 let containerEl: HTMLElement
 
+/** Cached last-rendered video frame to avoid blank flash during seek. */
+let frameCache: HTMLCanvasElement | null = null
+let frameCacheCtx: CanvasRenderingContext2D | null = null
+
 /** Cached transform for the current frame; null outside render(). */
 let frameTransform: Transform | null = null
 
@@ -50,6 +54,27 @@ function applyResize(): void {
     canvas.width = containerEl.clientWidth
     canvas.height = containerEl.clientHeight
   }
+}
+
+/** Discard the cached video frame (call when loading a new video). */
+export function clearFrameCache(): void {
+  frameCache = null
+  frameCacheCtx = null
+}
+
+/** Ensure frameCache canvas exists and matches video dimensions, then copy current frame. */
+function ensureFrameCache(): void {
+  const vw = videoEl.videoWidth
+  const vh = videoEl.videoHeight
+  if (!frameCache) {
+    frameCache = document.createElement('canvas')
+    frameCacheCtx = frameCache.getContext('2d')!
+  }
+  if (frameCache.width !== vw || frameCache.height !== vh) {
+    frameCache.width = vw
+    frameCache.height = vh
+  }
+  frameCacheCtx!.drawImage(videoEl, 0, 0)
 }
 
 export function getVideoElement(): HTMLVideoElement {
@@ -171,12 +196,16 @@ function render(): void {
   ctx.fillStyle = '#1a1a2e'
   ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-  // Draw video frame
+  // Draw video frame (use cached frame during seek to avoid blank flash)
+  const naturalW = videoEl.videoWidth
+  const naturalH = videoEl.videoHeight
   if (videoEl.readyState >= 2) {
-    const naturalW = videoEl.videoWidth
-    const naturalH = videoEl.videoHeight
+    ensureFrameCache()
     const { scale, offsetX, offsetY } = frameTransform
     ctx.drawImage(videoEl, offsetX, offsetY, naturalW * scale, naturalH * scale)
+  } else if (frameCache) {
+    const { scale, offsetX, offsetY } = frameTransform
+    ctx.drawImage(frameCache, offsetX, offsetY, naturalW * scale, naturalH * scale)
   }
 
   // Draw rectangles

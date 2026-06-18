@@ -114,12 +114,12 @@ export function addRectangle(rect: Rectangle): void {
   pushHistory()
 }
 
+/** Update rectangle properties without notifying. Caller must call pushHistory() or notify(). */
 export function updateRectangle(id: string, partial: Partial<Rectangle>): void {
   historyState = {
     ...historyState,
     rectangles: historyState.rectangles.map(r => (r.id === id ? { ...r, ...partial } : r)),
   }
-  notify()
 }
 
 export function removeRectangle(id: string): void {

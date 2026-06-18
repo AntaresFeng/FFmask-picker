@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && node -e \"require('fs').renameSync('dist/index.html','dist/ffmask-picker.html')\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "vite build && node -e \"require('fs').renameSync('dist/index.html','dist/ffmask-picker.html')\"",
     "preview": "vite preview"
   },
   "devDependencies": {

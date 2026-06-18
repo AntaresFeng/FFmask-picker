@@ -3,8 +3,6 @@
 ## 画布交互
 
 - 滚轮缩放时，中心点不在鼠标位置
-- 叠加层
-  - 参考: https://chat.deepseek.com/a/chat/s/f478468a-3fb1-40c4-b6b0-34e56e5cf3d5
 
 ## 功能缺失
 
@@ -12,4 +10,4 @@
 
 ## 性能
 
-full DOM teardown on every state change, double notify() pattern
+- full DOM teardown on every state change

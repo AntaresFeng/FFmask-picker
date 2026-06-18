@@ -1,6 +1,6 @@
 // src/drawer.ts
 
-import { getState, setGlobalState, selectRectangle, subscribe, addRectangle, updateRectangle, removeRectangle, createRectangle, pushHistory, getSelectedRect } from './state'
+import { getState, setGlobalState, selectRectangle, subscribe, addRectangle, updateRectangle, removeRectangle, createRectangle, pushHistory, notify, getSelectedRect } from './state'
 import { formatTime, parseTimeInput } from './timecode'
 import { drawboxString, allDrawboxString, exportJson, copyToClipboard, downloadFile } from './export'
 import { showToast } from './toast'
@@ -212,6 +212,7 @@ function setupPropertyInputs(): void {
     const slider = document.getElementById('prop-opacity') as HTMLInputElement
     const val = Number(slider.value)
     updateRectangle(s.selectedId, { opacity: val })
+    notify()
   })
   document.getElementById('prop-opacity')!.addEventListener('change', () => {
     pushHistory()
@@ -223,6 +224,7 @@ function setupPropertyInputs(): void {
     if (!s.selectedId) return
     const input = document.getElementById('prop-custom-color') as HTMLInputElement
     updateRectangle(s.selectedId, { color: input.value })
+    notify()
   })
   document.getElementById('prop-custom-color')!.addEventListener('change', () => {
     pushHistory()

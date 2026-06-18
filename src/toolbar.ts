@@ -1,7 +1,7 @@
 // src/toolbar.ts
 
 import { getState, setGlobalState, selectRectangle, subscribe, pushHistory, undo, redo, canUndo, canRedo } from './state'
-import { getVideoElement } from './canvas'
+import { getVideoElement, clearFrameCache } from './canvas'
 import { formatTime } from './timecode'
 import { showToast } from './toast'
 import { resolveColor } from './colors'
@@ -35,9 +35,10 @@ export function loadVideoFile(file: File): void {
   const video = getVideoElement()
   const url = URL.createObjectURL(file)
 
-  // Revoke previous URL
+  // Revoke previous URL and clear cached video frame
   const prev = getState().videoSrc
   if (prev) URL.revokeObjectURL(prev)
+  clearFrameCache()
 
   video.src = url
   video.load()
