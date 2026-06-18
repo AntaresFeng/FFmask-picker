@@ -131,7 +131,7 @@ export function importJson(text: string): { rects: Omit<Rectangle, 'id'>[]; erro
       height: height as number,
       color: typeof obj.color === 'string' ? obj.color : 'red',
       thickness: isFiniteNum(obj.thickness) ? (obj.thickness as number) : 4,
-      filled: typeof obj.filled === 'boolean' ? obj.filled : false,
+      filled: typeof obj.filled === 'boolean' ? obj.filled : true,
       opacity: isFiniteNum(obj.opacity) ? (obj.opacity as number) : 1,
       visible: typeof obj.visible === 'boolean' ? obj.visible : true,
     }
