@@ -260,7 +260,8 @@ button.primary {
   width: 36px;
 }
 
-#drawer.collapsed .drawer-content { display: none; }
+#drawer.collapsed .drawer-content,
+#drawer.collapsed .export-area { display: none; }
 
 .drawer-content {
   flex: 1;
@@ -277,7 +278,7 @@ button.primary {
   border-bottom: 1px solid var(--border);
 }
 
-.drawer-header span { color: var(--blue); font-weight: bold; font-size: 16px; }
+.drawer-header span { color: var(--blue); font-weight: bold; font-size: 14px; }
 .drawer-header .close-btn { cursor: pointer; color: var(--text-secondary); background: none; border: none; font-size: 16px; }
 
 .rect-list {
