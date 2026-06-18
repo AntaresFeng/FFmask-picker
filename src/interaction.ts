@@ -187,17 +187,23 @@ function onWheel(e: WheelEvent): void {
   const delta = e.deltaY > 0 ? 0.9 : 1.1
   const newZoom = Math.max(0.1, Math.min(20, s.zoom * delta))
 
-  // Zoom toward cursor
-  const sx = e.offsetX
-  const sy = e.offsetY
-  const cx = sx - s.panX
-  const cy = sy - s.panY
-  const ratio = newZoom / s.zoom
+  // Zoom toward cursor: find frame position under cursor with current transform,
+  // then compute new pan so the same frame position stays under cursor after zoom.
+  const frame = screenToFrame(e.offsetX, e.offsetY)
+
+  const video = getVideoElement()
+  const naturalW = video.videoWidth || 1920
+  const naturalH = video.videoHeight || 1080
+  const canvas = getCanvasElement()
+  const baseScale = Math.min(canvas.width / naturalW, canvas.height / naturalH)
+  const newScale = baseScale * newZoom
+  const newCenterX = (canvas.width - naturalW * newScale) / 2
+  const newCenterY = (canvas.height - naturalH * newScale) / 2
 
   setGlobalState({
     zoom: newZoom,
-    panX: sx - cx * ratio,
-    panY: sy - cy * ratio,
+    panX: e.offsetX - frame.x * newScale - newCenterX,
+    panY: e.offsetY - frame.y * newScale - newCenterY,
   })
 }
 
