@@ -235,8 +235,17 @@ function drawRectangle(rect: Rectangle, s: AppState): void {
   const isSelected = s.selectedId === rect.id
   const isOtherSelected = s.selectedId !== null && s.selectedId !== rect.id
 
+  // Check if currentTime is within this rectangle's timeRange
+  const inRange = !rect.timeRange ||
+    (s.currentTime >= rect.timeRange.start && s.currentTime <= rect.timeRange.end)
+
   ctx.save()
   if (isOtherSelected) ctx.globalAlpha = 0.5
+
+  // Out-of-range base opacity (selected vs not)
+  if (!inRange) {
+    ctx.globalAlpha *= isSelected ? 0.6 : 0.4
+  }
 
   // Fill for selected
   if (isSelected) {
@@ -247,7 +256,7 @@ function drawRectangle(rect: Rectangle, s: AppState): void {
   // Border
   ctx.strokeStyle = color
   ctx.lineWidth = isSelected ? 3 : 2
-  ctx.setLineDash(isSelected ? [] : [6, 4])
+  ctx.setLineDash(inRange ? [] : [6, 4])
   ctx.strokeRect(tl.x, tl.y, w, h)
 
   // Control points for selected
