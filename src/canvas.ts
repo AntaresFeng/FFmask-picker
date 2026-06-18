@@ -17,7 +17,7 @@ let containerEl: HTMLElement
 
 /** Cached last-rendered video frame to avoid blank flash during seek. */
 let frameCache: HTMLCanvasElement | null = null
-let frameCacheCtx: CanvasRenderingContext2D | null = null
+let cacheDirty = true
 
 /** Cached transform for the current frame; null outside render(). */
 let frameTransform: Transform | null = null
@@ -34,6 +34,8 @@ export function initCanvas(): void {
   videoEl.style.display = 'none'
   videoEl.playsInline = true
   videoEl.muted = true
+  videoEl.addEventListener('seeking', () => { cacheDirty = true })
+  videoEl.addEventListener('loadedmetadata', () => { cacheDirty = true })
   document.body.appendChild(videoEl)
 
   // ResizeObserver sets a pending flag; actual resize happens in renderLoop
@@ -59,22 +61,26 @@ function applyResize(): void {
 /** Discard the cached video frame (call when loading a new video). */
 export function clearFrameCache(): void {
   frameCache = null
-  frameCacheCtx = null
+  cacheDirty = true
 }
 
-/** Ensure frameCache canvas exists and matches video dimensions, then copy current frame. */
+/** Ensure frameCache canvas exists and matches video dimensions, then copy current frame if dirty. */
 function ensureFrameCache(): void {
   const vw = videoEl.videoWidth
   const vh = videoEl.videoHeight
   if (!frameCache) {
     frameCache = document.createElement('canvas')
-    frameCacheCtx = frameCache.getContext('2d')!
+    cacheDirty = true
   }
   if (frameCache.width !== vw || frameCache.height !== vh) {
     frameCache.width = vw
     frameCache.height = vh
+    cacheDirty = true
   }
-  frameCacheCtx!.drawImage(videoEl, 0, 0)
+  if (cacheDirty) {
+    frameCache.getContext('2d')!.drawImage(videoEl, 0, 0)
+    cacheDirty = false
+  }
 }
 
 export function getVideoElement(): HTMLVideoElement {
@@ -199,12 +205,11 @@ function render(): void {
   // Draw video frame (use cached frame during seek to avoid blank flash)
   const naturalW = videoEl.videoWidth
   const naturalH = videoEl.videoHeight
+  const { scale, offsetX, offsetY } = frameTransform
   if (videoEl.readyState >= 2) {
     ensureFrameCache()
-    const { scale, offsetX, offsetY } = frameTransform
     ctx.drawImage(videoEl, offsetX, offsetY, naturalW * scale, naturalH * scale)
   } else if (frameCache) {
-    const { scale, offsetX, offsetY } = frameTransform
     ctx.drawImage(frameCache, offsetX, offsetY, naturalW * scale, naturalH * scale)
   }
 
