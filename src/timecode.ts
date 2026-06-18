@@ -22,7 +22,7 @@ export function formatTime(totalSeconds: number): string {
  * Returns 0 for unparseable input.
  */
 export function parseTimeInput(text: string): number {
-  const trimmed = text.trim()
+  const trimmed = text.trim().replace(/[;：；]/g, ':')
   if (!trimmed) return 0
 
   const parts = trimmed.split(':')
