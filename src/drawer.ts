@@ -4,7 +4,7 @@ import { getState, setGlobalState, selectRectangle, subscribe, addRectangle, upd
 import { formatTime, parseTimeInput } from './timecode'
 import { drawboxString, allDrawboxString, exportJson, copyToClipboard, downloadFile } from './export'
 import { showToast } from './toast'
-import { resolveColor } from './colors'
+import { resolveColor, isPresetColor } from './colors'
 
 const PROP_MAPPING: Record<string, string> = { x: 'x', y: 'y', w: 'width', h: 'height', thickness: 'thickness' }
 
@@ -134,8 +134,9 @@ function renderPropsPanel(): void {
       : 'color-option'
   })
   const customColorInput = document.getElementById('prop-custom-color') as HTMLInputElement
-  if (document.activeElement !== customColorInput && rect.color.startsWith('#')) customColorInput.value = rect.color
-  customColorInput.classList.toggle('active', rect.color.startsWith('#'))
+  const isCustomColor = !isPresetColor(rect.color)
+  if (document.activeElement !== customColorInput && isCustomColor) customColorInput.value = rect.color
+  customColorInput.classList.toggle('active', isCustomColor)
 
   // Fill mode
   const fillCheckbox = document.getElementById('prop-filled') as HTMLInputElement

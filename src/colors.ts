@@ -12,6 +12,11 @@ export const COLOR_MAP: Record<string, string> = {
   orange: '#ff8800',
 }
 
+/** Check whether a color value matches a known preset name. */
+export function isPresetColor(color: string): boolean {
+  return color.toLowerCase() in COLOR_MAP
+}
+
 /** Resolve a color name or hex string to a CSS-compatible hex value. */
 export function resolveColor(color: string): string {
   if (color.startsWith('#') || color.startsWith('rgb') || color.startsWith('hsl')) return color
