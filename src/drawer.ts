@@ -134,7 +134,7 @@ function renderPropsPanel(): void {
       : 'color-option'
   })
   const customColorInput = document.getElementById('prop-custom-color') as HTMLInputElement
-  if (rect.color.startsWith('#')) customColorInput.value = rect.color
+  if (document.activeElement !== customColorInput && rect.color.startsWith('#')) customColorInput.value = rect.color
 
   // Fill mode
   const fillCheckbox = document.getElementById('prop-filled') as HTMLInputElement

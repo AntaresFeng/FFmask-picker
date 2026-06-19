@@ -73,18 +73,20 @@ export function loadVideoFile(file: File): void {
   }, { once: true })
 }
 
+export function togglePlayback(video: HTMLVideoElement): void {
+  if (video.paused) {
+    video.play().catch(() => showToast('视频播放失败'))
+  } else {
+    video.pause()
+  }
+}
+
 function setupPlayback(): void {
   const btn = document.getElementById('btn-play')!
   const slider = document.getElementById('frame-slider') as HTMLInputElement
   const video = getVideoElement()
 
-  btn.addEventListener('click', () => {
-    if (video.paused) {
-      video.play().catch(() => showToast('视频播放失败'))
-    } else {
-      video.pause()
-    }
-  })
+  btn.addEventListener('click', () => togglePlayback(video))
 
   video.addEventListener('play', () => { btn.textContent = '⏸' })
   video.addEventListener('pause', () => { btn.textContent = '▶' })

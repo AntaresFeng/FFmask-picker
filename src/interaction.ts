@@ -2,7 +2,7 @@
 
 import { getState, setGlobalState, selectRectangle, addRectangle, updateRectangle, removeRectangle, pushHistory, createRectangle, getDragState, setDragState, undo, redo, getSelectedRect } from './state'
 import { getCanvasElement, getVideoElement, screenToFrame, hitTestHandle, hitTestRect, getScale, getHandlePositions } from './canvas'
-import { showToast } from './toast'
+import { togglePlayback } from './toolbar'
 
 export function initInteraction(): void {
   const canvas = getCanvasElement()
@@ -274,8 +274,7 @@ function onKeyDown(e: KeyboardEvent): void {
   if (e.key === ' ') {
     e.preventDefault()
     const video = getVideoElement()
-    if (video.paused) video.play().catch(() => showToast('视频播放失败'))
-    else video.pause()
+    togglePlayback(video)
     return
   }
 
