@@ -419,7 +419,8 @@ button.primary {
   align-items: center;
 }
 
-.color-option {
+.color-option,
+.color-options input[type="color"] {
   width: 18px;
   height: 18px;
   border-radius: 3px;
@@ -427,17 +428,16 @@ button.primary {
   cursor: pointer;
 }
 
-.color-option.active { border-color: #fff; }
+.color-option.active,
+.color-options input[type="color"].active { border-color: #fff; }
 
 .color-options input[type="color"] {
-  width: 18px;
-  height: 18px;
-  border: none;
   padding: 0;
-  cursor: pointer;
   vertical-align: middle;
-  background: none;
-  border-radius: 0;
+  background: var(--bg-tertiary);
+  -webkit-appearance: none;
+  appearance: none;
+  overflow: hidden;
 }
 
 .time-range-toggle {
