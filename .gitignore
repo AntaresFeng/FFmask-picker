@@ -1,6 +1,21 @@
+# Dependencies
 node_modules
+
+# Build output
 dist
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local config / env
 *.local
+.env
+
+# Project-specific
 .superpowers
 ffmask-config.json
+docs/*.xlsx
