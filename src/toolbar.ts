@@ -80,11 +80,9 @@ function setupPlayback(): void {
 
   btn.addEventListener('click', () => {
     if (video.paused) {
-      video.play()
-      btn.textContent = '⏸'
+      video.play().catch(() => showToast('视频播放失败'))
     } else {
       video.pause()
-      btn.textContent = '▶'
     }
   })
 
