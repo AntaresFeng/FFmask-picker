@@ -84,7 +84,9 @@ export function downloadFile(content: string, filename: string, mimeType: string
   a.href = url
   a.download = filename
   a.click()
-  URL.revokeObjectURL(url)
+  // Revoke in next tick — avoids a historical Chrome race where
+  // synchronous revoke could abort the download before it starts.
+  setTimeout(() => URL.revokeObjectURL(url), 0)
 }
 
 /**
