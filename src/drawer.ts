@@ -164,12 +164,12 @@ function renderPropsPanel(): void {
   if (hasTime && rect.timeRange) {
     const startInput = document.getElementById('prop-time-start') as HTMLInputElement
     const endInput = document.getElementById('prop-time-end') as HTMLInputElement
-    const formattedStart = formatTime(rect.timeRange.start)
+    const formattedStart = formatTime(rect.timeRange.start, true)
     if (startInput.value !== formattedStart) startInput.value = formattedStart
-    const formattedEnd = formatTime(rect.timeRange.end)
+    const formattedEnd = formatTime(rect.timeRange.end, true)
     if (endInput.value !== formattedEnd) endInput.value = formattedEnd
-    startInput.placeholder = 'HH:MM:SS'
-    endInput.placeholder = 'HH:MM:SS'
+    startInput.placeholder = 'HH:mm:ss.SSS'
+    endInput.placeholder = 'HH:mm:ss.SSS'
   }
 }
 
@@ -267,7 +267,7 @@ function setupPropertyInputs(): void {
       const parsedVal = parseTimeInput(val)
       if (parsedVal < 0) {
         const input = document.getElementById(inputId) as HTMLInputElement
-        input.value = formatTime(rect.timeRange[field])
+        input.value = formatTime(rect.timeRange[field], true)
         return
       }
       updateRectangle(s.selectedId, {

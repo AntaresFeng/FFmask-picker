@@ -1,24 +1,32 @@
 // src/timecode.ts
 
 /**
- * Format seconds as MM:SS or HH:MM:SS for display.
+ * Format seconds for display. When `showMs` is true the output includes a `.SSS`
+ * millisecond suffix (ISO 8601 duration notation: HH:mm:ss.SSS or mm:ss.SSS).
+ * Without `showMs` the behaviour is unchanged.
  */
-export function formatTime(totalSeconds: number): string {
+export function formatTime(totalSeconds: number, showMs?: boolean): string {
   if (totalSeconds < 0) totalSeconds = 0
   const s = Math.floor(totalSeconds)
   const ss = s % 60
   const totalMin = Math.floor(s / 60)
   const mm = totalMin % 60
   const hh = Math.floor(totalMin / 60)
-  if (hh > 0) {
-    return `${hh}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`
+
+  const base = hh > 0
+    ? `${hh}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`
+    : `${mm}:${String(ss).padStart(2, '0')}`
+
+  if (showMs) {
+    const ms = Math.round(totalSeconds * 1000) % 1000
+    return `${base}.${String(ms).padStart(3, '0')}`
   }
-  return `${mm}:${String(ss).padStart(2, '0')}`
+  return base
 }
 
 /**
  * Parse a user-entered time string into seconds.
- * Accepted formats: "SS", "SS.mmm", "MM:SS", "MM:SS.mmm", "HH:MM:SS", "HH:MM:SS.mmm"
+ * Accepted formats: "ss", "ss.SSS", "mm:ss", "mm:ss.SSS", "HH:mm:ss", "HH:mm:ss.SSS"
  * Returns -1 for unparseable input, 0 for empty input.
  */
 export function parseTimeInput(text: string): number {
