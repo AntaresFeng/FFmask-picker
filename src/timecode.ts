@@ -19,7 +19,7 @@ export function formatTime(totalSeconds: number): string {
 /**
  * Parse a user-entered time string into seconds.
  * Accepted formats: "SS", "SS.mmm", "MM:SS", "MM:SS.mmm", "HH:MM:SS", "HH:MM:SS.mmm"
- * Returns 0 for unparseable input.
+ * Returns -1 for unparseable input, 0 for empty input.
  */
 export function parseTimeInput(text: string): number {
   const trimmed = text.trim().replace(/[;：；]/g, ':')
@@ -29,20 +29,20 @@ export function parseTimeInput(text: string): number {
 
   if (parts.length === 1) {
     const val = Number(parts[0])
-    return Number.isFinite(val) && val >= 0 ? val : 0
+    return Number.isFinite(val) && val >= 0 ? val : -1
   }
   if (parts.length === 2) {
     const mm = Number(parts[0])
     const ss = Number(parts[1])
-    if (!Number.isFinite(mm) || !Number.isFinite(ss) || mm < 0 || ss < 0) return 0
+    if (!Number.isFinite(mm) || !Number.isFinite(ss) || mm < 0 || ss < 0) return -1
     return mm * 60 + ss
   }
   if (parts.length === 3) {
     const hh = Number(parts[0])
     const mm = Number(parts[1])
     const ss = Number(parts[2])
-    if (!Number.isFinite(hh) || !Number.isFinite(mm) || !Number.isFinite(ss) || hh < 0 || mm < 0 || ss < 0) return 0
+    if (!Number.isFinite(hh) || !Number.isFinite(mm) || !Number.isFinite(ss) || hh < 0 || mm < 0 || ss < 0) return -1
     return hh * 3600 + mm * 60 + ss
   }
-  return 0
+  return -1
 }
