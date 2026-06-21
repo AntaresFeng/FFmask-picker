@@ -1,6 +1,6 @@
 // src/drawer.ts
 
-import { getState, setGlobalState, selectRectangle, subscribe, addRectangle, updateRectangle, removeRectangle, createRectangle, pushHistory, getSelectedRect } from './state'
+import { getState, setGlobalState, selectRectangle, subscribeHistory, addRectangle, updateRectangle, removeRectangle, createRectangle, pushHistory, getSelectedRect } from './state'
 import { formatTime, parseTimeInput } from './timecode'
 import { drawboxString, allDrawboxString, exportJson, copyToClipboard, downloadFile } from './export'
 import { showToast } from './toast'
@@ -13,7 +13,7 @@ export function initDrawer(): void {
   setupPropertyInputs()
   setupExportButtons()
 
-  subscribe(renderDrawer)
+  subscribeHistory(renderDrawer)
   renderDrawer(getState())
 }
 

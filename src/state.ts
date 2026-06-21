@@ -22,7 +22,8 @@ let historyState: HistoryState = {
 
 let history: HistoryState[] = []
 let historyIndex = -1
-const listeners = new Set<Listener>()
+const globalListeners = new Set<Listener>()
+const historyListeners = new Set<Listener>()
 
 function cloneHistoryState(h: HistoryState): HistoryState {
   return {
@@ -39,23 +40,33 @@ export function getState(): AppState {
 /** Update global (non-history) fields. Does NOT record history. */
 export function setGlobalState(partial: Partial<GlobalState>): void {
   Object.assign(global, partial)
-  notify()
+  notifyGlobal()
 }
 
 /** Update selectedId. Does NOT record history. */
 export function selectRectangle(id: string | null): void {
   historyState = { ...historyState, selectedId: id }
-  notify()
+  notifyHistory()
 }
 
-export function subscribe(listener: Listener): () => void {
-  listeners.add(listener)
-  return () => { listeners.delete(listener) }
+export function subscribeGlobal(listener: Listener): () => void {
+  globalListeners.add(listener)
+  return () => { globalListeners.delete(listener) }
 }
 
-export function notify(): void {
-  const merged = getState()
-  for (const fn of listeners) fn(merged)
+export function subscribeHistory(listener: Listener): () => void {
+  historyListeners.add(listener)
+  return () => { historyListeners.delete(listener) }
+}
+
+function notifyGlobal(): void {
+  const s = getState()
+  for (const fn of globalListeners) fn(s)
+}
+
+function notifyHistory(): void {
+  const s = getState()
+  for (const fn of historyListeners) fn(s)
 }
 
 /** Save current history state to undo stack. Call AFTER making changes. */
@@ -64,21 +75,21 @@ export function pushHistory(): void {
   history.push(cloneHistoryState(historyState))
   if (history.length > MAX_HISTORY) history.shift()
   historyIndex = history.length - 1
-  notify()
+  notifyHistory()
 }
 
 export function undo(): void {
   if (historyIndex <= 0) return
   historyIndex--
   historyState = cloneHistoryState(history[historyIndex])
-  notify()
+  notifyHistory()
 }
 
 export function redo(): void {
   if (historyIndex >= history.length - 1) return
   historyIndex++
   historyState = cloneHistoryState(history[historyIndex])
-  notify()
+  notifyHistory()
 }
 
 export function canUndo(): boolean {
@@ -114,7 +125,7 @@ export function addRectangle(rect: Rectangle): void {
   pushHistory()
 }
 
-/** Update rectangle properties without notifying. Caller must call pushHistory() or notify(). */
+/** Update rectangle properties without notifying. Caller must call pushHistory() or notifyHistory(). */
 export function updateRectangle(id: string, partial: Partial<Rectangle>): void {
   historyState = {
     ...historyState,

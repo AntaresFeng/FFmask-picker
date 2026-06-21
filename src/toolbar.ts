@@ -1,6 +1,6 @@
 // src/toolbar.ts
 
-import { getState, setGlobalState, selectRectangle, subscribe, pushHistory, undo, redo, canUndo, canRedo, setRectangles } from './state'
+import { getState, setGlobalState, selectRectangle, subscribeGlobal, subscribeHistory, pushHistory, undo, redo, canUndo, canRedo, setRectangles } from './state'
 import { getVideoElement, clearFrameCache } from './canvas'
 import { formatTime } from './timecode'
 import { showToast } from './toast'
@@ -18,7 +18,8 @@ export function initToolbar(): void {
   setupResetButton()
   setupImport()
 
-  subscribe(updateToolbarState)
+  subscribeGlobal(updateToolbarState)
+  subscribeHistory(updateToolbarState)
   updateToolbarState(getState())
 }
 
