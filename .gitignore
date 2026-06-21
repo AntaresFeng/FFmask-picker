@@ -19,3 +19,4 @@ Thumbs.db
 .superpowers
 ffmask-config.json
 docs/*.xlsx
+.worktrees
