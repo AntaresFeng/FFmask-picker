@@ -5,6 +5,7 @@ import { formatTime, parseTimeInput } from './timecode'
 import { drawboxString, allDrawboxString, exportJson, copyToClipboard, downloadFile } from './export'
 import { showToast } from './toast'
 import { resolveColor, isPresetColor } from './colors'
+import type { Rectangle } from './types'
 
 const PROP_MAPPING: Record<string, string> = { x: 'x', y: 'y', w: 'width', h: 'height', thickness: 'thickness' }
 
@@ -123,7 +124,8 @@ function renderPropsPanel(): void {
   ]
   for (const [id, val] of fields) {
     const input = document.getElementById(id) as HTMLInputElement
-    if (document.activeElement !== input) input.value = String(Math.round(val))
+    const target = String(Math.round(val))
+    if (input.value !== target) input.value = target
   }
 
   // Color options
@@ -135,7 +137,7 @@ function renderPropsPanel(): void {
   })
   const customColorInput = document.getElementById('prop-custom-color') as HTMLInputElement
   const isCustomColor = !isPresetColor(rect.color)
-  if (document.activeElement !== customColorInput && isCustomColor) customColorInput.value = rect.color
+  if (isCustomColor && customColorInput.value !== rect.color) customColorInput.value = rect.color
   customColorInput.classList.toggle('active', isCustomColor)
 
   // Fill mode
@@ -148,9 +150,8 @@ function renderPropsPanel(): void {
   // Opacity
   const opacitySlider = document.getElementById('prop-opacity') as HTMLInputElement
   const opacityVal = document.getElementById('prop-opacity-val')!
-  if (document.activeElement !== opacitySlider) {
-    opacitySlider.value = String(rect.opacity)
-  }
+  const opacityTarget = String(rect.opacity)
+  if (opacitySlider.value !== opacityTarget) opacitySlider.value = opacityTarget
   opacityVal.textContent = rect.opacity.toFixed(2)
 
   // Time range
@@ -163,12 +164,10 @@ function renderPropsPanel(): void {
   if (hasTime && rect.timeRange) {
     const startInput = document.getElementById('prop-time-start') as HTMLInputElement
     const endInput = document.getElementById('prop-time-end') as HTMLInputElement
-    if (document.activeElement !== startInput) {
-      startInput.value = formatTime(rect.timeRange.start)
-    }
-    if (document.activeElement !== endInput) {
-      endInput.value = formatTime(rect.timeRange.end)
-    }
+    const formattedStart = formatTime(rect.timeRange.start)
+    if (startInput.value !== formattedStart) startInput.value = formattedStart
+    const formattedEnd = formatTime(rect.timeRange.end)
+    if (endInput.value !== formattedEnd) endInput.value = formattedEnd
     startInput.placeholder = 'HH:MM:SS'
     endInput.placeholder = 'HH:MM:SS'
   }
@@ -182,7 +181,15 @@ function setupPropertyInputs(): void {
       if (!s.selectedId) return
       const prop = id.replace('prop-', '')
       const raw = Number((document.getElementById(id) as HTMLInputElement).value)
-      if (!Number.isFinite(raw)) return
+      if (!Number.isFinite(raw)) {
+        const rect = getSelectedRect()
+        if (rect) {
+          const input = document.getElementById(id) as HTMLInputElement
+          const propKey = PROP_MAPPING[prop] as keyof Rectangle
+          input.value = String(Math.round(rect[propKey] as number))
+        }
+        return
+      }
       const isSize = prop === 'w' || prop === 'h' || prop === 'thickness'
       const val = isSize ? Math.max(1, Math.round(Math.abs(raw))) : Math.round(raw)
       updateRectangle(s.selectedId, { [PROP_MAPPING[prop]]: val })
@@ -258,7 +265,11 @@ function setupPropertyInputs(): void {
       if (!rect?.timeRange) return
       const val = (document.getElementById(inputId) as HTMLInputElement).value
       const parsedVal = parseTimeInput(val)
-      if (parsedVal < 0) return
+      if (parsedVal < 0) {
+        const input = document.getElementById(inputId) as HTMLInputElement
+        input.value = formatTime(rect.timeRange[field])
+        return
+      }
       updateRectangle(s.selectedId, {
         timeRange: { ...rect.timeRange, [field]: parsedVal },
       })
