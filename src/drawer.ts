@@ -124,8 +124,7 @@ function renderPropsPanel(): void {
   ]
   for (const [id, val] of fields) {
     const input = document.getElementById(id) as HTMLInputElement
-    const target = String(Math.round(val))
-    if (input.value !== target) input.value = target
+    input.value = String(Math.round(val))
   }
 
   // Color options
@@ -137,7 +136,7 @@ function renderPropsPanel(): void {
   })
   const customColorInput = document.getElementById('prop-custom-color') as HTMLInputElement
   const isCustomColor = !isPresetColor(rect.color)
-  if (isCustomColor && customColorInput.value !== rect.color) customColorInput.value = rect.color
+  if (isCustomColor) customColorInput.value = rect.color
   customColorInput.classList.toggle('active', isCustomColor)
 
   // Fill mode
@@ -150,8 +149,7 @@ function renderPropsPanel(): void {
   // Opacity
   const opacitySlider = document.getElementById('prop-opacity') as HTMLInputElement
   const opacityVal = document.getElementById('prop-opacity-val')!
-  const opacityTarget = String(rect.opacity)
-  if (opacitySlider.value !== opacityTarget) opacitySlider.value = opacityTarget
+  opacitySlider.value = String(rect.opacity)
   opacityVal.textContent = rect.opacity.toFixed(2)
 
   // Time range
@@ -164,10 +162,8 @@ function renderPropsPanel(): void {
   if (hasTime && rect.timeRange) {
     const startInput = document.getElementById('prop-time-start') as HTMLInputElement
     const endInput = document.getElementById('prop-time-end') as HTMLInputElement
-    const formattedStart = formatTime(rect.timeRange.start, true)
-    if (startInput.value !== formattedStart) startInput.value = formattedStart
-    const formattedEnd = formatTime(rect.timeRange.end, true)
-    if (endInput.value !== formattedEnd) endInput.value = formattedEnd
+    startInput.value = formatTime(rect.timeRange.start, true)
+    endInput.value = formatTime(rect.timeRange.end, true)
     startInput.placeholder = 'HH:mm:ss.SSS'
     endInput.placeholder = 'HH:mm:ss.SSS'
   }
