@@ -1,6 +1,6 @@
 // src/interaction.ts
 
-import { getState, setGlobalState, selectRectangle, addRectangle, updateRectangle, removeRectangle, pushHistory, createRectangle, getDragState, setDragState, undo, redo, getSelectedRect } from './state'
+import { getState, setGlobalState, selectRectangle, addRectangle, updateRectangle, removeRectangle, pushHistory, notifyHistory, createRectangle, getDragState, setDragState, undo, redo, getSelectedRect } from './state'
 import { getCanvasElement, getVideoElement, screenToFrame, hitTestHandle, hitTestRect, getScale, getHandlePositions } from './canvas'
 import { togglePlayback } from './toolbar'
 
@@ -112,6 +112,7 @@ function onMouseMove(e: MouseEvent): void {
         x: Math.round(drag.moveOrigX! + dx),
         y: Math.round(drag.moveOrigY! + dy),
       })
+      notifyHistory()
     }
     return
   }
@@ -145,6 +146,7 @@ function onMouseMove(e: MouseEvent): void {
       width: Math.round(width),
       height: Math.round(height),
     })
+    notifyHistory()
     return
   }
 }

@@ -64,7 +64,7 @@ function notifyGlobal(): void {
   for (const fn of globalListeners) fn(s)
 }
 
-function notifyHistory(): void {
+export function notifyHistory(): void {
   const s = getState()
   for (const fn of historyListeners) fn(s)
 }
@@ -125,7 +125,7 @@ export function addRectangle(rect: Rectangle): void {
   pushHistory()
 }
 
-/** Update rectangle properties without notifying. Caller must call pushHistory() or notifyHistory(). */
+/** Update rectangle properties without notifying. Caller must call pushHistory() (to record history + notify) or notifyHistory() (notify only, no history). */
 export function updateRectangle(id: string, partial: Partial<Rectangle>): void {
   historyState = {
     ...historyState,
