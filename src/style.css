@@ -486,6 +486,25 @@ button.primary {
   padding: 5px 8px;
 }
 
+.export-scale-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: center;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+.export-scale-group .export-scale-label {
+  font-weight: 600;
+  margin-right: 2px;
+}
+.export-scale-group label {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+}
+
 /* --- Toast notification --- */
 .toast {
   position: fixed;
