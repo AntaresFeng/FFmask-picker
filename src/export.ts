@@ -4,7 +4,7 @@ import type { Rectangle, ExportScale } from './types'
 import { resolveColor } from './colors'
 
 /** 目标分辨预设（无视长宽比的 forced scale 目标尺寸）。 */
-export const SCALE_PRESETS: Record<Exclude<ExportScale, 'original'>, { w: number; h: number }> = {
+const SCALE_PRESETS: Record<Exclude<ExportScale, 'original'>, { w: number; h: number }> = {
   '1920x1080': { w: 1920, h: 1080 },
   '3840x2160': { w: 3840, h: 2160 },
 }
