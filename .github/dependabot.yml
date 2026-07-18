@@ -1,0 +1,34 @@
+version: 2
+updates:
+  # GitHub Actions — keep action versions current so action runtimes
+  # (e.g. node20 -> node24 deprecation warnings) stay fresh.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci(deps)"
+      include: "scope"
+
+  # npm (pnpm) — runtime + dev dependencies from package.json.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "npm"
+    commit-message:
+      prefix: "build(deps)"
+      include: "scope"
+    groups:
+      # Non-breaking minor/patch bumps ship together to reduce PR noise.
+      patch-and-minor:
+        update-types:
+          - "minor"
+          - "patch"
