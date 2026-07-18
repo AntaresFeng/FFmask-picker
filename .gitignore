@@ -21,3 +21,6 @@ ffmask-export.json
 docs/*.xlsx
 .worktrees
 TODO.*
+
+# Local-only docs (skills workflow: specs & plans, not version-managed)
+docs/superpowers
