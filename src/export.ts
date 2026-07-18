@@ -1,7 +1,32 @@
 // src/export.ts
 
-import type { Rectangle } from './types'
+import type { Rectangle, ExportScale } from './types'
 import { resolveColor } from './colors'
+
+/** 目标分辨预设（无视长宽比的 forced scale 目标尺寸）。 */
+export const SCALE_PRESETS: Record<Exclude<ExportScale, 'original'>, { w: number; h: number }> = {
+  '1920x1080': { w: 1920, h: 1080 },
+  '3840x2160': { w: 3840, h: 2160 },
+}
+
+/**
+ * 按目标分辨率换算矩形坐标。X/Y 各自独立缩放（无视长宽比）。
+ * 换算后四舍五入取整。'original' 时原样返回。
+ * naturalW/H 为视频自然分辨率，0 时回落为 1 避免除 0。
+ */
+function scaleRect(rect: Rectangle, scale: ExportScale, naturalW: number, naturalH: number): Rectangle {
+  if (scale === 'original') return rect
+  const { w, h } = SCALE_PRESETS[scale]
+  const nw = naturalW || 1
+  const nh = naturalH || 1
+  return {
+    ...rect,
+    x: Math.round(rect.x * w / nw),
+    y: Math.round(rect.y * h / nh),
+    width: Math.round(rect.width * w / nw),
+    height: Math.round(rect.height * h / nh),
+  }
+}
 
 /** Convert a color to ffmpeg-compatible 0xRRGGBB format. */
 function toFfmpegColor(color: string): string {
@@ -13,15 +38,22 @@ function toFfmpegColor(color: string): string {
 
 /**
  * Generate a single drawbox filter string for one rectangle.
+ * scale/naturalW/naturalH 可选：传入时按目标分辨率换算坐标。
  */
-export function drawboxString(rect: Rectangle): string {
-  const t = rect.filled ? 'fill' : String(rect.thickness)
-  const ffmpegColor = toFfmpegColor(rect.color)
-  const color = rect.opacity < 1 ? `${ffmpegColor}@${+rect.opacity.toFixed(2)}` : ffmpegColor
-  let s = `drawbox=x=${rect.x}:y=${rect.y}:w=${rect.width}:h=${rect.height}:color=${color}:t=${t}`
-  if (rect.timeRange) {
-    const start = +rect.timeRange.start.toFixed(3)
-    const end = +rect.timeRange.end.toFixed(3)
+export function drawboxString(
+  rect: Rectangle,
+  scale: ExportScale = 'original',
+  naturalW = 0,
+  naturalH = 0,
+): string {
+  const r = scaleRect(rect, scale, naturalW, naturalH)
+  const t = r.filled ? 'fill' : String(r.thickness)
+  const ffmpegColor = toFfmpegColor(r.color)
+  const color = r.opacity < 1 ? `${ffmpegColor}@${+r.opacity.toFixed(2)}` : ffmpegColor
+  let s = `drawbox=x=${r.x}:y=${r.y}:w=${r.width}:h=${r.height}:color=${color}:t=${t}`
+  if (r.timeRange) {
+    const start = +r.timeRange.start.toFixed(3)
+    const end = +r.timeRange.end.toFixed(3)
     s += `:enable='between(t,${start},${end})'`
   }
   return s
@@ -30,35 +62,50 @@ export function drawboxString(rect: Rectangle): string {
 /**
  * Generate combined drawbox filter string for all visible rectangles.
  * Returns the value for -vf "..." (without the outer quotes).
+ * scale/naturalW/naturalH 可选：传入时按目标分辨率换算坐标。
  */
-export function allDrawboxString(rectangles: Rectangle[]): string {
+export function allDrawboxString(
+  rectangles: Rectangle[],
+  scale: ExportScale = 'original',
+  naturalW = 0,
+  naturalH = 0,
+): string {
   return rectangles
     .filter(r => r.visible)
-    .map(r => drawboxString(r))
+    .map(r => drawboxString(r, scale, naturalW, naturalH))
     .join(',')
 }
 
 /**
  * Export rectangles as JSON config.
+ * scale/naturalW/naturalH 可选：传入时按目标分辨率换算坐标，与复制串保持一致。
  */
-export function exportJson(rectangles: Rectangle[]): string {
-  const data = rectangles.map(r => ({
-    x: r.x,
-    y: r.y,
-    width: r.width,
-    height: r.height,
-    color: r.color,
-    thickness: r.thickness,
-    filled: r.filled,
-    opacity: r.opacity,
-    visible: r.visible,
-    timeRange: r.timeRange
-      ? {
-          start: r.timeRange.start,
-          end: r.timeRange.end,
-        }
-      : null,
-  }))
+export function exportJson(
+  rectangles: Rectangle[],
+  scale: ExportScale = 'original',
+  naturalW = 0,
+  naturalH = 0,
+): string {
+  const data = rectangles.map(r => {
+    const s = scaleRect(r, scale, naturalW, naturalH)
+    return {
+      x: s.x,
+      y: s.y,
+      width: s.width,
+      height: s.height,
+      color: s.color,
+      thickness: s.thickness,
+      filled: s.filled,
+      opacity: s.opacity,
+      visible: s.visible,
+      timeRange: s.timeRange
+        ? {
+            start: s.timeRange.start,
+            end: s.timeRange.end,
+          }
+        : null,
+    }
+  })
   return JSON.stringify(data, null, 2)
 }
 
