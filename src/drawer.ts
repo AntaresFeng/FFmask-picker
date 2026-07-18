@@ -5,7 +5,8 @@ import { formatTime, parseTimeInput } from './timecode'
 import { drawboxString, allDrawboxString, exportJson, copyToClipboard, downloadFile } from './export'
 import { showToast } from './toast'
 import { resolveColor, isPresetColor } from './colors'
-import type { Rectangle } from './types'
+import type { Rectangle, ExportScale } from './types'
+import { getVideoElement } from './canvas'
 
 const PROP_MAPPING: Record<string, string> = { x: 'x', y: 'y', w: 'width', h: 'height', thickness: 'thickness' }
 
@@ -13,6 +14,7 @@ export function initDrawer(): void {
   setupToggle()
   setupPropertyInputs()
   setupExportButtons()
+  setupExportScaleRadio()
 
   subscribeHistory(renderDrawer)
   renderDrawer(getState())
@@ -276,6 +278,17 @@ function setupPropertyInputs(): void {
   setupTimeRangeInput('prop-time-end', 'end')
 }
 
+function setupExportScaleRadio(): void {
+  const radios = document.querySelectorAll<HTMLInputElement>('input[name="export-scale"]')
+  radios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (radio.checked) {
+        setGlobalState({ exportScale: radio.value as ExportScale })
+      }
+    })
+  })
+}
+
 function setupExportButtons(): void {
   document.getElementById('export-current-side')!.addEventListener('click', () => exportCurrent())
   document.getElementById('export-all-side')!.addEventListener('click', () => exportAll())
@@ -285,7 +298,9 @@ function setupExportButtons(): void {
 async function exportCurrent(): Promise<void> {
   const rect = getSelectedRect()
   if (!rect) { showToast('请先选中一个矩形'); return }
-  const text = drawboxString(rect)
+  const s = getState()
+  const video = getVideoElement()
+  const text = drawboxString(rect, s.exportScale, video.videoWidth, video.videoHeight)
   const ok = await copyToClipboard(text)
   showToast(ok ? '已复制到剪贴板' : '复制失败，请手动复制')
 }
@@ -293,7 +308,8 @@ async function exportCurrent(): Promise<void> {
 async function exportAll(): Promise<void> {
   const s = getState()
   if (s.rectangles.length === 0) { showToast('没有矩形'); return }
-  const text = allDrawboxString(s.rectangles)
+  const video = getVideoElement()
+  const text = allDrawboxString(s.rectangles, s.exportScale, video.videoWidth, video.videoHeight)
   const ok = await copyToClipboard(text)
   showToast(ok ? '已复制全部参数到剪贴板' : '复制失败，请手动复制')
 }
@@ -301,7 +317,8 @@ async function exportAll(): Promise<void> {
 function exportJsonFile(): void {
   const s = getState()
   if (s.rectangles.length === 0) { showToast('没有矩形'); return }
-  const json = exportJson(s.rectangles)
+  const video = getVideoElement()
+  const json = exportJson(s.rectangles, s.exportScale, video.videoWidth, video.videoHeight)
   downloadFile(json, 'ffmask-export.json', 'application/json')
   showToast('JSON 文件已下载')
 }
