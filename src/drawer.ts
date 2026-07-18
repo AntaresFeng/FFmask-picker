@@ -282,11 +282,16 @@ function setupExportScaleRadio(): void {
   const radios = document.querySelectorAll<HTMLInputElement>('input[name="export-scale"]')
   radios.forEach(radio => {
     radio.addEventListener('change', () => {
-      if (radio.checked) {
-        setGlobalState({ exportScale: radio.value as ExportScale })
-      }
+      setGlobalState({ exportScale: radio.value as ExportScale })
     })
   })
+}
+
+/** 导出所需的目标分辨率档位与视频自然尺寸，统一三处导出调用的取值。 */
+function exportScaleArgs(): { scale: ExportScale; naturalW: number; naturalH: number } {
+  const { exportScale } = getState()
+  const video = getVideoElement()
+  return { scale: exportScale, naturalW: video.videoWidth, naturalH: video.videoHeight }
 }
 
 function setupExportButtons(): void {
@@ -298,9 +303,8 @@ function setupExportButtons(): void {
 async function exportCurrent(): Promise<void> {
   const rect = getSelectedRect()
   if (!rect) { showToast('请先选中一个矩形'); return }
-  const s = getState()
-  const video = getVideoElement()
-  const text = drawboxString(rect, s.exportScale, video.videoWidth, video.videoHeight)
+  const { scale, naturalW, naturalH } = exportScaleArgs()
+  const text = drawboxString(rect, scale, naturalW, naturalH)
   const ok = await copyToClipboard(text)
   showToast(ok ? '已复制到剪贴板' : '复制失败，请手动复制')
 }
@@ -308,8 +312,8 @@ async function exportCurrent(): Promise<void> {
 async function exportAll(): Promise<void> {
   const s = getState()
   if (s.rectangles.length === 0) { showToast('没有矩形'); return }
-  const video = getVideoElement()
-  const text = allDrawboxString(s.rectangles, s.exportScale, video.videoWidth, video.videoHeight)
+  const { scale, naturalW, naturalH } = exportScaleArgs()
+  const text = allDrawboxString(s.rectangles, scale, naturalW, naturalH)
   const ok = await copyToClipboard(text)
   showToast(ok ? '已复制全部参数到剪贴板' : '复制失败，请手动复制')
 }
@@ -317,8 +321,8 @@ async function exportAll(): Promise<void> {
 function exportJsonFile(): void {
   const s = getState()
   if (s.rectangles.length === 0) { showToast('没有矩形'); return }
-  const video = getVideoElement()
-  const json = exportJson(s.rectangles, s.exportScale, video.videoWidth, video.videoHeight)
+  const { scale, naturalW, naturalH } = exportScaleArgs()
+  const json = exportJson(s.rectangles, scale, naturalW, naturalH)
   downloadFile(json, 'ffmask-export.json', 'application/json')
   showToast('JSON 文件已下载')
 }

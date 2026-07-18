@@ -88,16 +88,9 @@ export function exportJson(
 ): string {
   const data = rectangles.map(r => {
     const s = scaleRect(r, scale, naturalW, naturalH)
+    const { id: _id, ...rest } = s
     return {
-      x: s.x,
-      y: s.y,
-      width: s.width,
-      height: s.height,
-      color: s.color,
-      thickness: s.thickness,
-      filled: s.filled,
-      opacity: s.opacity,
-      visible: s.visible,
+      ...rest,
       timeRange: s.timeRange
         ? {
             start: s.timeRange.start,
