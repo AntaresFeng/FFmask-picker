@@ -19,6 +19,9 @@ export interface Rectangle {
   }
 }
 
+/** 导出时矩形坐标的目标分辨率档位。'original' 表示不换算。 */
+export type ExportScale = 'original' | '1920x1080' | '3840x2160'
+
 export interface GlobalState {
   videoSrc: string | null // Object URL
   duration: number         // seconds
@@ -28,6 +31,7 @@ export interface GlobalState {
   zoom: number
   panX: number
   panY: number
+  exportScale: ExportScale
 }
 
 export interface HistoryState {

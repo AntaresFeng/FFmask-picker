@@ -13,6 +13,7 @@ let global: GlobalState = {
   zoom: 1,
   panX: 0,
   panY: 0,
+  exportScale: 'original',
 }
 
 let historyState: HistoryState = {
