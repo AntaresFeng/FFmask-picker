@@ -12,19 +12,19 @@ const SCALE_PRESETS: Record<Exclude<ExportScale, 'original'>, { w: number; h: nu
 /**
  * 按目标分辨率换算矩形坐标。X/Y 各自独立缩放（无视长宽比）。
  * 换算后四舍五入取整。'original' 时原样返回。
- * naturalW/H 为视频自然分辨率，0 时回落为 1 避免除 0。
+ * naturalW/H 为视频自然分辨率；缺省（0，即未加载视频或元数据未就绪）时无法
+ * 做有意义的换算，原样返回原坐标，避免 |1 兜底导致坐标被放大成无意义值。
  */
 function scaleRect(rect: Rectangle, scale: ExportScale, naturalW: number, naturalH: number): Rectangle {
   if (scale === 'original') return rect
+  if (!naturalW || !naturalH) return rect
   const { w, h } = SCALE_PRESETS[scale]
-  const nw = naturalW || 1
-  const nh = naturalH || 1
   return {
     ...rect,
-    x: Math.round(rect.x * w / nw),
-    y: Math.round(rect.y * h / nh),
-    width: Math.round(rect.width * w / nw),
-    height: Math.round(rect.height * h / nh),
+    x: Math.round(rect.x * w / naturalW),
+    y: Math.round(rect.y * h / naturalH),
+    width: Math.round(rect.width * w / naturalW),
+    height: Math.round(rect.height * h / naturalH),
   }
 }
 
