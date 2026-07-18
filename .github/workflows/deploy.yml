@@ -35,15 +35,16 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Rename for Pages root
-        run: |
-          mkdir -p site
-          cp dist/ffmask-picker.html site/index.html
+      - name: Prepare Pages entry
+        # Pages requires index.html at the artifact root. Rename the single-file
+        # build output in place under dist/ (which is .gitignore-d, never tracked)
+        # rather than copying to a separate root directory.
+        run: mv dist/ffmask-picker.html dist/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: dist
 
   deploy:
     needs: build
