@@ -2,7 +2,18 @@
   "name": "ffmask-picker",
   "private": true,
   "version": "0.0.1",
+  "description": "Browser-based visual tool for creating FFmpeg drawbox filter parameters",
+  "license": "MIT",
+  "author": "AntaresFeng",
   "type": "module",
+  "keywords": [
+    "ffmpeg",
+    "drawbox",
+    "mask",
+    "video",
+    "overlay",
+    "visual-editor"
+  ],
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc -p tsconfig.json --noEmit",

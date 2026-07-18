@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-FFmask Picker is a browser-based visual tool for creating FFmpeg `drawbox` filter parameters. Users upload a video, draw rectangles on frames, configure properties (color, opacity, thickness, time ranges), and export the resulting FFmpeg filter strings or JSON config files. The UI is in Chinese (zh-CN).
+FFmask Picker is a browser-based visual tool for creating FFmpeg `drawbox` filter parameters. Users upload a video, draw rectangles on frames, configure properties (color, opacity, thickness, time ranges), and export the resulting FFmpeg filter strings or a JSON file of their rectangle parameters. The UI is in Chinese (zh-CN).
+
+> The exported JSON file (`ffmask-export.json`) is a runtime artifact of the rectangles the user drew — it is **not** application configuration. It is `.gitignore`d by design.
 
 ## Commands
 
@@ -41,7 +43,7 @@ Consumers use `subscribe(listener)` to react to state changes. `getState()` retu
 | `interaction.ts` | Mouse/keyboard handlers: draw mode (drag to create rect), select mode (click to select, drag to move/resize), wheel zoom, pan, keyboard shortcuts |
 | `toolbar.ts` | Toolbar UI wiring: upload, playback control, time slider (ms), color picker, speed selector, undo/redo buttons |
 | `drawer.ts` | Side panel: rectangle list, property editing (position, size, color, opacity, thickness, filled, time range), export buttons |
-| `export.ts` | Generate FFmpeg `drawbox` filter strings, full ffmpeg command, JSON config; clipboard and file download helpers |
+| `export.ts` | Generate FFmpeg `drawbox` filter strings, full ffmpeg command, rectangle JSON export; clipboard and file download helpers |
 | `timecode.ts` | Time formatting (`formatTime`) and user input parsing (`parseTimeInput`) |
 | `types.ts` | `Rectangle`, `GlobalState`, `HistoryState`, `AppState`, `Listener` types |
 | `toast.ts` | Simple toast notification |
@@ -53,7 +55,3 @@ All rectangle coordinates are in **video-frame pixel space** (natural resolution
 ### Build
 
 Vite 8 + `vite-plugin-singlefile` produces a single self-contained HTML file with all JS/CSS/assets inlined. The build script renames `dist/index.html` → `dist/ffmask-picker.html`.
-
-## Known Issues
-
-See `issues.txt` for tracked problems including zoom center point offset and UI sizing.
