@@ -302,6 +302,6 @@ function exportJsonFile(): void {
   const s = getState()
   if (s.rectangles.length === 0) { showToast('没有矩形'); return }
   const json = exportJson(s.rectangles)
-  downloadFile(json, 'ffmask-config.json', 'application/json')
+  downloadFile(json, 'ffmask-export.json', 'application/json')
   showToast('JSON 文件已下载')
 }

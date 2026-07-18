@@ -17,6 +17,7 @@ Thumbs.db
 
 # Project-specific
 .superpowers
-ffmask-config.json
+ffmask-export.json
 docs/*.xlsx
 .worktrees
+TODO.*
